@@ -574,6 +574,7 @@
 
 
     <script>
+        // PWA Service Worker 등록 스크립트 (유지)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/service-worker.js')
@@ -588,9 +589,74 @@
     </script>
     
     <script>
+        // 🌟 수정 1: $와 $$ 함수를 DOMContentLoaded 밖으로 빼내어 전역/상위 스코프에 정의
+        const $ = (selector) => document.querySelector(selector);
+        const $$ = (selector) => document.querySelectorAll(selector);
+
         let monthlyBarChart = null;
         let expensePieChart = null;
+        let currentFormType = 'expense'; // 전역 변수로 관리
 
+        // 🌟 수정 2: DOM 요소 캐싱도 DOMContentLoaded 밖에서 정의
+        // 이 DOM 요소 객체는 HTML이 파싱된 후에 접근되므로 안전합니다.
+        const elements = {
+            // 페이지/네비게이션
+            headerTitle: $('#header-title'),
+            pages: $$('.page'),
+            navBtns: $$('.nav-btn'),
+            addEntryBtn: $('#add-entry-btn'),
+            
+            // 달력
+            calendarPage: $('#calendar-page'),
+            monthYear: $('#month-year'),
+            calendarGrid: $('#calendar-grid'),
+            prevMonthBtn: $('#prev-month'),
+            nextMonthBtn: $('#next-month'),
+            dailyDetails: $('#daily-details'),
+            dailyTitle: $('#daily-title'),
+            dailyList: $('#daily-list'),
+
+            // 통계
+            statsPage: $('#stats-page'), // 🌟 안정적으로 캐싱됨
+            statsTotalIncome: $('#stats-total-income'),
+            statsTotalExpense: $('#stats-total-expense'),
+            statsTotalBalance: $('#stats-total-balance'),
+            monthlyBarChartCanvas: $('#monthly-bar-chart'),
+            expensePieChartCanvas: $('#expense-pie-chart'),
+
+            // 입력 모달
+            entryModal: $('#entry-modal'),
+            btnExpense: $('#btn-expense'),
+            btnIncome: $('#btn-income'),
+            entryDate: $('#entry-date'),
+            entryAmount: $('#entry-amount'),
+            entryCategory: $('#entry-category'),
+            entryMemo: $('#entry-memo'),
+            btnOcr: $('#btn-ocr'),
+            ocrReceiptInput: $('#ocr-receipt-input'),
+            saveEntryBtn: $('#save-entry'),
+            cancelEntryBtn: $('#cancel-entry'),
+            deleteEntryBtn: $('#delete-entry'),
+            entryId: $('#entry-id'),
+            
+            // 설정
+            settingsPage: $('#settings-page'),
+            darkModeToggle: $('#dark-mode-toggle'),
+            aiApiKey: $('#ai-api-key'),
+            ocrApiKey: $('#ocr-api-key'),
+            saveApiKeysBtn: $('#save-api-keys'),
+            backupDataBtn: $('#backup-data'),
+            restoreDataBtn: $('#restore-data-btn'),
+            restoreDataInput: $('#restore-data-input'),
+
+            // AI 조언
+            aiAdviceModal: $('#ai-advice-modal'),
+            aiAdviceText: $('#ai-advice-text'),
+            aiAdviceCloseBtn: $('.ai-close-btn')
+        };
+
+
+        // --- DOMContentLoaded 내부 로직 ---
         document.addEventListener('DOMContentLoaded', () => {
             // --- 전역 변수 및 상태 관리 ---
             const STATE = {
@@ -615,65 +681,6 @@
                 ]
             };
 
-            // --- DOM 요소 캐싱 ---
-            const $ = (selector) => document.querySelector(selector);
-            const $$ = (selector) => document.querySelectorAll(selector);
-
-            const elements = {
-                // 페이지/네비게이션
-                headerTitle: $('#header-title'),
-                pages: $$('.page'),
-                navBtns: $$('.nav-btn'),
-                addEntryBtn: $('#add-entry-btn'),
-                
-                // 달력
-                calendarPage: $('#calendar-page'),
-                monthYear: $('#month-year'),
-                calendarGrid: $('#calendar-grid'),
-                prevMonthBtn: $('#prev-month'),
-                nextMonthBtn: $('#next-month'),
-                dailyDetails: $('#daily-details'),
-                dailyTitle: $('#daily-title'),
-                dailyList: $('#daily-list'),
-
-                // 통계
-                statsPage: $('#stats-page'),
-                statsTotalIncome: $('#stats-total-income'),
-                statsTotalExpense: $('#stats-total-expense'),
-                statsTotalBalance: $('#stats-total-balance'),
-                monthlyBarChartCanvas: $('#monthly-bar-chart'),
-                expensePieChartCanvas: $('#expense-pie-chart'),
-
-                // 입력 모달
-                entryModal: $('#entry-modal'),
-                btnExpense: $('#btn-expense'),
-                btnIncome: $('#btn-income'),
-                entryDate: $('#entry-date'),
-                entryAmount: $('#entry-amount'),
-                entryCategory: $('#entry-category'),
-                entryMemo: $('#entry-memo'),
-                btnOcr: $('#btn-ocr'),
-                ocrReceiptInput: $('#ocr-receipt-input'),
-                saveEntryBtn: $('#save-entry'),
-                cancelEntryBtn: $('#cancel-entry'),
-                deleteEntryBtn: $('#delete-entry'),
-                entryId: $('#entry-id'),
-                
-                // 설정
-                settingsPage: $('#settings-page'),
-                darkModeToggle: $('#dark-mode-toggle'),
-                aiApiKey: $('#ai-api-key'),
-                ocrApiKey: $('#ocr-api-key'),
-                saveApiKeysBtn: $('#save-api-keys'),
-                backupDataBtn: $('#backup-data'),
-                restoreDataBtn: $('#restore-data-btn'),
-                restoreDataInput: $('#restore-data-input'),
-
-                // AI 조언
-                aiAdviceModal: $('#ai-advice-modal'),
-                aiAdviceText: $('#ai-advice-text'),
-                aiAdviceCloseBtn: $('.ai-close-btn')
-            };
 
             // --- 데이터/유틸 함수 ---
             function saveData() { localStorage.setItem('transactions', JSON.stringify(STATE.transactions)); }
@@ -716,21 +723,16 @@
                 const date = STATE.currentDate;
                 elements.monthYear.textContent = getMonthYearString(date);
                 elements.calendarGrid.innerHTML = ''; // 초기화
-                // ... (달력 렌더링 로직 생략)
                 
-                // 임시: 달력 레이아웃만 (요일)
                 const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
                 dayNames.forEach(day => {
                     const dayNameCell = document.createElement('div');
                     dayNameCell.textContent = day;
                     dayNameCell.style.fontWeight = '700';
-                    // var() 함수는 JS에서 직접 접근 불가. CSS 변수는 CSS에서만 사용 가능
-                    // 여기서는 임시로 고정 색상 사용
                     dayNameCell.style.color = day === '일' ? '#E53935' : day === '토' ? '#007BFF' : '#333';
                     elements.calendarGrid.appendChild(dayNameCell);
                 });
                 
-                // 임시: 날짜 칸
                 const today = new Date().toISOString().split('T')[0];
                 for (let i = 1; i <= 30; i++) {
                     const cell = document.createElement('div');
@@ -739,7 +741,6 @@
                     cell.textContent = i;
                     if (dateStr === today) cell.classList.add('today');
                     
-                    // 임시 항목 존재 표시
                     if (Math.random() < 0.2) cell.classList.add('has-entry'); 
                     
                     cell.dataset.date = dateStr;
@@ -773,15 +774,12 @@
                 elements.statsTotalExpense.textContent = formatCurrencyWithWon(totalExpense);
                 elements.statsTotalBalance.textContent = formatCurrencyWithWon(totalIncome - totalExpense);
 
-                // 차트 렌더링 (데이터만 전달)
                 renderMonthlyBarChart(currentMonthTransactions);
                 renderExpensePieChart(categoryTotals);
             }
             
             function renderMonthlyBarChart(transactions) {
-                // ... (Chart.js 구현 필요)
                 if (monthlyBarChart) monthlyBarChart.destroy();
-                // 임시 차트 생성
                 monthlyBarChart = new Chart(elements.monthlyBarChartCanvas, {
                     type: 'bar',
                     data: {
@@ -808,12 +806,10 @@
             }
 
             function renderExpensePieChart(categoryData) {
-                // ... (Chart.js 구현 필요)
                 if (expensePieChart) expensePieChart.destroy();
                 const labels = Object.keys(categoryData);
                 const data = Object.values(categoryData);
                 
-                // 임시 차트 생성
                 expensePieChart = new Chart(elements.expensePieChartCanvas, {
                     type: 'doughnut',
                     data: {
@@ -830,7 +826,6 @@
 
 
             // --- 입력 모달 관리 ---
-            let currentFormType = 'expense';
             
             function updateCategoryOptions(type) {
                 const categories = CATEGORIES[type] || [];
@@ -844,7 +839,6 @@
                 elements.btnIncome.classList.toggle('active', type === 'income');
                 updateCategoryOptions(type);
                 
-                // 지출일 때만 OCR 버튼 보이게 (수입 영수증은 드묾)
                 elements.btnOcr.style.display = (type === 'expense' || type === 'income') ? 'block' : 'none'; 
             }
 
@@ -852,7 +846,6 @@
                 elements.entryModal.classList.add('show');
                 
                 if (tx) {
-                    // 수정 모드
                     elements.entryId.value = tx.id;
                     currentFormType = tx.type;
                     elements.entryDate.value = tx.date;
@@ -861,7 +854,6 @@
                     elements.deleteEntryBtn.style.display = 'block';
                     elements.saveEntryBtn.textContent = '수정하기';
                 } else {
-                    // 새 입력 모드
                     elements.entryId.value = ''; 
                     currentFormType = 'expense';
                     elements.entryDate.value = new Date().toISOString().split('T')[0];
@@ -914,7 +906,6 @@
                 closeEntryModal();
                 updateAllViews();
                 
-                // 1번: 저장 후 AI 조언 실행
                 runAiAdvice(savedTx); 
             }
             function handleDeleteEntry() {
@@ -935,10 +926,8 @@
                 const file = event.target.files[0];
                 if (!file) return;
 
-                // OCR/AI API 호출 가상화
                 const ocrKey = localStorage.getItem('ocrApiKey');
                 if (!ocrKey) {
-                     // 이미 OCR 버튼 클릭 시 체크하지만, 혹시 몰라 한 번 더 체크
                      alert('설정 > OCR API 키를 먼저 입력해주세요.');
                      event.target.value = null; 
                      return;
@@ -946,7 +935,6 @@
                 
                 alert('영수증 사진을 인식 중입니다...');
                 
-                // 가상 응답 
                 const isMart = file.name.toLowerCase().includes('mart') || file.name.toLowerCase().includes('market');
                 const virtualOcrResult = {
                     success: true,
@@ -956,7 +944,6 @@
                     memo: isMart ? 'OO마트 장보기' : 'OO치킨 결제'
                 };
                 
-                // 폼 자동 작성
                 if (virtualOcrResult.success) {
                     updateFormType('expense');
                     elements.entryDate.value = virtualOcrResult.date;
@@ -984,7 +971,6 @@
                 const aiKey = localStorage.getItem('aiApiKey');
                 if (!aiKey) return; 
                 
-                // 가상 분석 응답
                 const month = new Date(latestTx.date).getMonth() + 1;
                 const adviceText = latestTx.type === 'expense'
                     ? `이번 달 **${latestTx.category}** 지출이 지난 달 평균 대비 ${Math.floor(Math.random() * 30) + 10}% 증가했습니다. 예산을 점검해보세요!`
@@ -1000,7 +986,6 @@
                 elements.darkModeToggle.checked = theme === 'dark';
                 STATE.currentTheme = theme;
                 localStorage.setItem('theme', theme);
-                // 테마 변경 시 차트 재렌더링
                 if (elements.statsPage.classList.contains('active')) {
                      renderStats(); 
                 }
@@ -1074,7 +1059,6 @@
             elements.btnExpense.addEventListener('click', () => updateFormType('expense'));
             elements.btnIncome.addEventListener('click', () => updateFormType('income'));
             elements.entryCategory.addEventListener('change', () => {
-                // 카테고리 변경 시 type 강제 변경 (수입/지출 분류 유지)
                 const category = elements.entryCategory.value;
                 const isExpense = CATEGORIES.expense.includes(category);
                 const isIncome = CATEGORIES.income.includes(category);
@@ -1121,7 +1105,7 @@
             // --- 초기화 ---
             function updateAllViews() {
                 renderCalendar();
-                // 🌟 수정된 부분: 캐싱된 elements.statsPage를 사용합니다.
+                // 🌟 최종 수정된 부분: 안정적으로 캐싱된 elements.statsPage를 사용합니다.
                 if (elements.statsPage.classList.contains('active')) {
                      renderStats(); 
                 }
@@ -1138,6 +1122,7 @@
                 Chart.defaults.color = 'var(--text-color)';
             }
 
+            // DOMContentLoaded가 발생하면 모든 초기화를 시작합니다.
             initialize();
         });
     </script>
