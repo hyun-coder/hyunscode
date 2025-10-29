@@ -589,7 +589,7 @@
     </script>
     
     <script>
-        // 🌟 수정 1: $와 $$ 함수를 DOMContentLoaded 밖으로 빼내어 전역/상위 스코프에 정의
+        // 🌟 $와 $$ 함수를 DOMContentLoaded 밖으로 빼내어 전역/상위 스코프에 정의
         const $ = (selector) => document.querySelector(selector);
         const $$ = (selector) => document.querySelectorAll(selector);
 
@@ -597,8 +597,7 @@
         let expensePieChart = null;
         let currentFormType = 'expense'; // 전역 변수로 관리
 
-        // 🌟 수정 2: DOM 요소 캐싱도 DOMContentLoaded 밖에서 정의
-        // 이 DOM 요소 객체는 HTML이 파싱된 후에 접근되므로 안전합니다.
+        // 🌟 DOM 요소 캐싱
         const elements = {
             // 페이지/네비게이션
             headerTitle: $('#header-title'),
@@ -617,7 +616,7 @@
             dailyList: $('#daily-list'),
 
             // 통계
-            statsPage: $('#stats-page'), // 🌟 안정적으로 캐싱됨
+            statsPage: $('#stats-page'), 
             statsTotalIncome: $('#stats-total-income'),
             statsTotalExpense: $('#stats-total-expense'),
             statsTotalBalance: $('#stats-total-balance'),
@@ -718,30 +717,46 @@
                 }
             }
 
-            // --- 렌더링 함수 (미구현 부분은 주석 처리) ---
+            // --- 렌더링 함수 ---
             function renderCalendar() {
                 const date = STATE.currentDate;
                 elements.monthYear.textContent = getMonthYearString(date);
                 elements.calendarGrid.innerHTML = ''; // 초기화
                 
+                // 요일 헤더
                 const dayNames = ['일', '월', '화', '수', '목', '금', '토'];
                 dayNames.forEach(day => {
                     const dayNameCell = document.createElement('div');
                     dayNameCell.textContent = day;
                     dayNameCell.style.fontWeight = '700';
-                    dayNameCell.style.color = day === '일' ? '#E53935' : day === '토' ? '#007BFF' : '#333';
+                    dayNameCell.style.color = day === '일' ? 'var(--expense-color)' : day === '토' ? 'var(--income-color)' : 'var(--text-color)';
                     elements.calendarGrid.appendChild(dayNameCell);
                 });
                 
+                // 달력 날짜 계산
+                const firstDayOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getDay();
+                const daysInMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate();
                 const today = new Date().toISOString().split('T')[0];
-                for (let i = 1; i <= 30; i++) {
+                const yearMonthStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                
+                // 빈 칸 채우기
+                for (let i = 0; i < firstDayOfMonth; i++) {
+                    elements.calendarGrid.appendChild(document.createElement('div'));
+                }
+                
+                // 날짜 셀 채우기
+                for (let i = 1; i <= daysInMonth; i++) {
                     const cell = document.createElement('div');
-                    const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
+                    const dateStr = `${yearMonthStr}-${String(i).padStart(2, '0')}`;
                     cell.classList.add('day-cell');
                     cell.textContent = i;
+                    
                     if (dateStr === today) cell.classList.add('today');
                     
-                    if (Math.random() < 0.2) cell.classList.add('has-entry'); 
+                    // 해당 날짜에 거래 내역이 있는지 확인
+                    if (getTransactionsByDate(dateStr).length > 0) {
+                        cell.classList.add('has-entry'); 
+                    }
                     
                     cell.dataset.date = dateStr;
                     cell.addEventListener('click', () => showDailyDetails(dateStr));
@@ -749,10 +764,41 @@
                 }
             }
             
+            // 🌟 showDailyDetails 함수 교체 (수정된 부분)
             function showDailyDetails(dateStr) { 
+                // 1. 제목 업데이트
                 elements.dailyTitle.textContent = `${dateStr} 상세 내역`;
-                elements.dailyList.innerHTML = '<li>항목 없음 (JS 구현 필요)</li>';
+                
+                // 2. 해당 날짜의 거래 내역 가져오기
+                const transactions = getTransactionsByDate(dateStr);
+                
+                // 3. 거래 내역을 HTML 목록 항목으로 변환 (Map)
+                const list = transactions.map(tx => {
+                    const sign = tx.type === 'income' ? '+' : '-';
+                    const color = tx.type === 'income' ? 'var(--income-color)' : 'var(--expense-color)';
+                    
+                    return `
+                        <li style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px dashed var(--border-color);" 
+                            onclick="openEntryModal(STATE.transactions.find(t => t.id === ${tx.id}))">
+                            <div>
+                                <span style="font-weight: 700; color: ${color}; margin-right: 0.5rem;">[${tx.category}]</span>
+                                <span>${tx.memo || '내용 없음'}</span>
+                            </div>
+                            <span style="font-weight: 700; color: ${color};">${sign} ${formatCurrency(String(tx.amount))}</span>
+                        </li>
+                    `;
+                }).join(''); // 배열을 하나의 문자열로 결합
+
+                // 4. 리스트를 화면에 출력
+                elements.dailyList.innerHTML = list.length > 0 ? list : '<li>항목 없음</li>';
                 elements.dailyDetails.style.display = 'block';
+                
+                // 5. 달력의 선택된 날짜 셀 스타일 업데이트
+                $$('.day-cell').forEach(cell => cell.classList.remove('selected'));
+                const selectedCell = $(`[data-date="${dateStr}"]`);
+                if (selectedCell) {
+                    selectedCell.classList.add('selected');
+                }
             }
             
             function renderStats() {
@@ -780,6 +826,9 @@
             
             function renderMonthlyBarChart(transactions) {
                 if (monthlyBarChart) monthlyBarChart.destroy();
+                
+                // 🌟 실제 데이터 분석 (임의의 데이터 대신 사용자가 입력한 데이터를 주간 합산해야 함)
+                // 현재는 가상 데이터 그대로 유지
                 monthlyBarChart = new Chart(elements.monthlyBarChartCanvas, {
                     type: 'bar',
                     data: {
@@ -820,7 +869,15 @@
                             hoverOffset: 4
                         }]
                     },
-                    options: { responsive: true, maintainAspectRatio: false }
+                    options: { 
+                        responsive: true, 
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: labels.length > 0
+                            }
+                        }
+                    }
                 });
             }
 
@@ -839,7 +896,8 @@
                 elements.btnIncome.classList.toggle('active', type === 'income');
                 updateCategoryOptions(type);
                 
-                elements.btnOcr.style.display = (type === 'expense' || type === 'income') ? 'block' : 'none'; 
+                // 영수증 OCR 버튼은 지출/수입일 때만 표시 (현재는 모든 경우에 표시)
+                elements.btnOcr.style.display = 'block'; 
             }
 
             function openEntryModal(tx = null) {
@@ -921,7 +979,7 @@
                 }
             }
             
-            // --- 🌟 AI/OCR 관련 로직 ---
+            // --- 🌟 AI/OCR 관련 로직 (가상 구현) ---
             function handleOcrUpload(event) {
                 const file = event.target.files[0];
                 if (!file) return;
@@ -1105,17 +1163,15 @@
             // --- 초기화 ---
             function updateAllViews() {
                 renderCalendar();
-                // 🌟 최종 수정된 부분: 안정적으로 캐싱된 elements.statsPage를 사용합니다.
                 if (elements.statsPage.classList.contains('active')) {
                      renderStats(); 
                 }
-                elements.dailyDetails.style.display = 'none';
             }
 
             function initialize() {
                 applyTheme(STATE.currentTheme);
                 loadApiKeys();
-                updateCategoryOptions(currentFormType); // 초기 카테고리 로드
+                updateCategoryOptions(currentFormType); 
                 updateAllViews();
                 
                 Chart.defaults.font.family = 'Nanum Gothic, sans-serif';
