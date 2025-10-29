@@ -203,7 +203,7 @@
             flex: 1;
         }
 
-        /* 🌟 입력 모달 스타일 추가 */
+        /* 🌟 입력 모달 스타일 */
         #entry-modal {
             display: none; /* JS로 'show' 클래스 토글 */
             position: fixed;
@@ -724,7 +724,9 @@
                     const dayNameCell = document.createElement('div');
                     dayNameCell.textContent = day;
                     dayNameCell.style.fontWeight = '700';
-                    dayNameCell.style.color = day === '일' ? var('--expense-color') : day === '토' ? var('--income-color') : 'var(--text-color)';
+                    // var() 함수는 JS에서 직접 접근 불가. CSS 변수는 CSS에서만 사용 가능
+                    // 여기서는 임시로 고정 색상 사용
+                    dayNameCell.style.color = day === '일' ? '#E53935' : day === '토' ? '#007BFF' : '#333';
                     elements.calendarGrid.appendChild(dayNameCell);
                 });
                 
@@ -937,7 +939,7 @@
                 const ocrKey = localStorage.getItem('ocrApiKey');
                 if (!ocrKey) {
                      // 이미 OCR 버튼 클릭 시 체크하지만, 혹시 몰라 한 번 더 체크
-                     alert('설정 > OCR API 키가 유효하지 않습니다.');
+                     alert('설정 > OCR API 키를 먼저 입력해주세요.');
                      event.target.value = null; 
                      return;
                 }
@@ -1119,6 +1121,7 @@
             // --- 초기화 ---
             function updateAllViews() {
                 renderCalendar();
+                // 🌟 수정된 부분: 캐싱된 elements.statsPage를 사용합니다.
                 if (elements.statsPage.classList.contains('active')) {
                      renderStats(); 
                 }
