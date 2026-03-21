@@ -1025,9 +1025,10 @@ body.no-scroll{overflow:hidden;touch-action:none;}
   transition:transform .15s ease,background .2s;
   animation:fabIn .3s ease both;
 }
-.fab-item:nth-child(1){animation-delay:.06s;}
-.fab-item:nth-child(2){animation-delay:.03s;}
-.fab-item:nth-child(3){animation-delay:0s;}
+.fab-item:nth-child(1){animation-delay:.09s;}
+.fab-item:nth-child(2){animation-delay:.06s;}
+.fab-item:nth-child(3){animation-delay:.03s;}
+.fab-item:nth-child(4){animation-delay:0s;}
 @keyframes fabIn{from{transform:translateY(12px) scale(.95);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
 .fab-item:active{transform:scale(.92);}
 .fab-item.active{background:rgba(6,182,212,.22);border-color:rgba(6,182,212,.5);color:var(--cyan);}
@@ -1577,6 +1578,23 @@ input::placeholder { color: var(--txt3); }
   will-change: height;
 }
 
+/* ── 달력 하단 여백 (플로팅버튼 겹침 방지) ── */
+#calendar-view {
+  padding-bottom: 140px !important;
+}
+
+/* ── 위젯 토글 – 숨김 상태 ── */
+#cal-widgets.widgets-hidden > #goal-gauge-wrap,
+#cal-widgets.widgets-hidden > #sparkline-wrap {
+  display: none !important;
+}
+
+/* ── FAB 위젯 토글 아이템 ── */
+.fab-item.widget-on  { background: rgba(134,239,172,.18) !important; border-color: rgba(134,239,172,.45) !important; color: var(--green) !important; }
+.fab-item.widget-on .fab-item-icon { background: var(--green-bg) !important; color: var(--green) !important; }
+.fab-item.widget-off { background: rgba(107,114,138,.12) !important; border-color: rgba(107,114,138,.3) !important; color: var(--txt3) !important; }
+.fab-item.widget-off .fab-item-icon { background: rgba(107,114,138,.12) !important; color: var(--txt3) !important; }
+
 /* iOS Safari input zoom 방지 – focus 시 font-size 16px 이상 */
 @supports (-webkit-touch-callout: none) {
   input[type=text], input[type=number], select, textarea {
@@ -2024,6 +2042,17 @@ input[enterkeyhint], input[inputmode] {
 <!-- FAB NAVIGATION -->
 <div id="fab-wrap">
   <div id="fab-menu">
+    <!-- 위젯 토글 아이템 -->
+    <button class="fab-item widget-on" id="fi-widget-toggle" onclick="toggleCalWidgets()">
+      <div class="fab-item-icon">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="3" width="20" height="5" rx="2"/>
+          <rect x="2" y="11" width="9" height="10" rx="2"/>
+          <rect x="13" y="11" width="9" height="10" rx="2"/>
+        </svg>
+      </div>
+      <span id="fi-widget-label">위젯 숨기기</span>
+    </button>
     <!-- 설정 메뉴 아이템 -->
     <button class="fab-item" id="fi-settings" onclick="fabNav('settings')">
       <div class="fab-item-icon">
@@ -2314,7 +2343,7 @@ input[enterkeyhint], input[inputmode] {
             </div>
             <div class="set-row-body">
               <div class="set-row-title">VUI 사용</div>
-              <div class="set-row-sub">마이크 버튼으로 근무를 빠르게 등록</div>
+              <div class="set-row-sub">음성 또는 텍스트 명령으로 근무 등록·잔업·기간일괄·기본급/목표 설정·통계조회·화면전환 지원</div>
             </div>
             <label class="sw"><input type="checkbox" id="vui-toggle" onchange="toggleVuiSetting(this.checked);"><span class="sw-trk"></span></label>
           </div>
@@ -2492,9 +2521,9 @@ input[enterkeyhint], input[inputmode] {
 <div id="vui-text-modal" class="modal modal-center" style="z-index:750;">
   <div class="modal-dialog">
     <div class="dlg-hdr" style="text-align:center;">
-      <div style="font-size:1.6em;margin-bottom:4px;">⌨️</div>
-      <div class="dlg-title">근무 입력</div>
-      <div style="font-size:.75em;color:var(--txt2);margin-top:4px;">이 기기는 음성 인식을 지원하지 않아<br>텍스트로 입력합니다</div>
+      <div style="font-size:1.6em;margin-bottom:4px;">⚡</div>
+      <div class="dlg-title">VUI 빠른 입력</div>
+      <div style="font-size:.75em;color:var(--txt2);margin-top:4px;">날짜·근무형태 선택 또는 명령어 직접 입력</div>
     </div>
     <div class="dlg-body">
       <!-- 날짜 선택 -->
@@ -2517,6 +2546,24 @@ input[enterkeyhint], input[inputmode] {
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="반차"          onclick="vuiSetType(this)">🌿 반차</button>
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="휴무"          onclick="vuiSetType(this)">😴 휴무</button>
       </div>
+      <!-- VUI 명령어 가이드 칩 -->
+      <div style="padding:10px var(--pad) 4px;">
+        <div style="font-size:.7em;font-weight:800;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;">💬 음성 명령 예시</div>
+        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
+          <span style="background:var(--cyan-bg);border:1px solid var(--cyan-bd);color:var(--cyan);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">오늘 야간</span>
+          <span style="background:var(--cyan-bg);border:1px solid var(--cyan-bd);color:var(--cyan);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">내일 주간특근</span>
+          <span style="background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">12일 야간</span>
+          <span style="background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">이번주 월~금 주간</span>
+          <span style="background:var(--purple-bg);border:1px solid rgba(196,181,253,.35);color:var(--purple);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">오늘 잔업 2시간</span>
+          <span style="background:var(--purple-bg);border:1px solid rgba(196,181,253,.35);color:var(--purple);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">오늘 야간 잔업 1시간30분</span>
+          <span style="background:var(--green-bg);border:1px solid rgba(134,239,172,.35);color:var(--green);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">기본급 300만원</span>
+          <span style="background:var(--green-bg);border:1px solid rgba(134,239,172,.35);color:var(--green);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">목표 250만원</span>
+          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">이번달 야간</span>
+          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">이번달 근무 현황</span>
+          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">통계 보여줘</span>
+          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">어제 삭제</span>
+        </div>
+      </div>
       <div id="vui-text-selected" style="font-size:.82em;color:var(--txt3);text-align:center;min-height:18px;"></div>
     </div>
     <div class="dlg-actions">
@@ -2527,6 +2574,17 @@ input[enterkeyhint], input[inputmode] {
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
         등록
       </button>
+    </div>
+    <!-- 자유 텍스트 명령어 입력 -->
+    <div style="padding:8px var(--pad) max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--bd);">
+      <div style="font-size:.72em;font-weight:800;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">⌨️ 또는 명령어 직접 입력</div>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <input type="text" id="vui-cmd-input" class="ifield" style="flex:1;min-height:44px;font-size:.88em;" placeholder='"오늘 잔업 2시간", "기본급 300만원" ...' enterkeyhint="send"
+          onkeydown="if(event.key==='Enter'){vuiRunTextCmd();event.preventDefault();}">
+        <button class="tbtn tbtn-cyan" style="min-width:56px;min-height:44px;" onclick="vuiRunTextCmd();">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -2887,7 +2945,7 @@ let DATA = {
     basePays:{}, prevYearBasePays:{}, regularPayChecks:{}, prevYearRegularPayChecks:{},
     additionalItemsByPeriod:{}, prevYearAdditionalItemsByPeriod:{},
     customHolidays:HOLIDAYS_BASE, isPanelCollapsed:false, classChangeHistory:[],
-    isLightMode:false, isMuted:false, goalSalary:0, vuiEnabled:true, vuiSpeechPref:true,
+    isLightMode:false, isMuted:false, goalSalary:0, vuiEnabled:true, vuiSpeechPref:true, widgetsHidden:false,
     overtimeList:[
       {name:'G1조출',time:1.0},{name:'G2조출',time:1.0},{name:'G2지원',time:0.5},
       {name:'G3조출',time:1.0},{name:'G5조출',time:1.0},{name:'G5지원',time:0.5},
@@ -3135,6 +3193,7 @@ const load = () => {
   if(d.settings.goalSalary===undefined) d.settings.goalSalary=0;
   if(d.settings.vuiEnabled===undefined) d.settings.vuiEnabled=true;
   if(d.settings.vuiSpeechPref===undefined) d.settings.vuiSpeechPref=true;
+  if(d.settings.widgetsHidden===undefined) d.settings.widgetsHidden=false;
   DATA={...DATA,...d};
   applyTheme(DATA.settings.isLightMode);
   $('setting-account').value=DATA.account;
@@ -3938,11 +3997,20 @@ const VUI = (() => {
         return p.length>=3 ? `현재 보는 월: ${p[1]}년 ${+p[2]+1}월` : '달력을 확인하세요';
     }},
     { icon:'💡', getText:() => speechAvailable
-        ? '마이크 버튼: "오늘 야간", "내일 주간" 처럼 말해보세요!'
+        ? '"오늘 야간" · "내일 주간특근" · "어제 잔업 2시간"'
         : '버튼을 눌러 날짜·근무 형태를 빠르게 등록하세요' },
-    { icon: speechAvailable?'🎤':'⌨️', getText:() => speechAvailable
-        ? '"어제 삭제", "오늘 주간특근" 도 됩니다'
+    { icon:'🎤', getText:() => speechAvailable
+        ? '"12일 야간" · "이번주 월~금 주간" 처럼 날짜 지정도 돼요'
         : '근무 형태를 선택해 빠르게 등록할 수 있습니다' },
+    { icon:'📊', getText:() => speechAvailable
+        ? '"이번달 야간" · "이번달 잔업" · "통계 보여줘"'
+        : '등록된 데이터로 급여를 자동 계산합니다' },
+    { icon:'💴', getText:() => speechAvailable
+        ? '"기본급 300만원" · "목표 250만원" 으로 즉시 설정'
+        : '설정 탭에서 기본급을 입력해 주세요' },
+    { icon:'📋', getText:() => speechAvailable
+        ? '"이번달 근무 현황" · "이번달 얼마" 로 확인'
+        : '통계 탭에서 월별 급여 현황을 확인하세요' },
   ];
   let tickerIdx = 0;
 
@@ -3962,45 +4030,270 @@ const VUI = (() => {
     setInterval(rotateTicker, 5000);
   };
 
-  /* 공통 명령 처리 */
+  /* ═══════════════════════════════════════════════
+     VUI 확장 명령 처리 엔진 v2
+     지원: 근무등록/잔업/기간일괄/특정날짜/기본급·수당/
+           목표급여/통계조회/화면전환/삭제/현황확인
+  ═══════════════════════════════════════════════ */
   const processCommand = (transcript) => {
-    const cmd = transcript.replace(/\s+/g,'');
+    const raw  = transcript.trim();
+    const cmd  = raw.replace(/\s+/g, '');
     const today = new Date();
-    let targetDate=new Date(today), dateLabel='오늘';
-    if(cmd.includes('어제')){ targetDate.setDate(today.getDate()-1); dateLabel='어제'; }
-    else if(cmd.includes('내일')){ targetDate.setDate(today.getDate()+1); dateLabel='내일'; }
-    const ds=fmtDate(targetDate);
 
-    let workType=null;
-    if(cmd.includes('주간특근'))                          workType='주간특근';
-    else if(cmd.includes('야간특근'))                     workType='야간특근';
-    else if(cmd.includes('야간퇴근')||cmd.includes('칠서')) workType='야간퇴근(칠서)';
-    else if(cmd.includes('주간'))                         workType='주간';
-    else if(cmd.includes('야간'))                         workType='야간';
-    else if(cmd.includes('휴가')||cmd.includes('연차'))   workType='휴가';
-    else if(cmd.includes('반차'))                         workType='반차';
-    else if(cmd.includes('휴무'))                         workType='휴무';
-    else if(cmd.includes('17시'))                         workType='17시퇴근';
+    /* ── 헬퍼 ── */
+    const korToNum = s => {
+      const map={'영':0,'일':1,'이':2,'삼':3,'사':4,'오':5,'육':6,'칠':7,'팔':8,'구':9,
+                 '십':10,'백':100,'천':1000,'만':10000,'억':100000000};
+      let result=0, tmp=0, sub=0;
+      for(const ch of s){
+        const v=map[ch];
+        if(v===undefined){if(!isNaN(ch)){sub=sub*10+Number(ch);}continue;}
+        if(v>=10000){result=(result+(tmp||1))*v;tmp=0;sub=0;}
+        else if(v>=10){tmp+=(sub||1)*v;sub=0;}
+        else{sub=sub*10+v;}
+      }
+      return result+tmp+sub;
+    };
+    const extractNumber = str => {
+      // 숫자 직접 추출 (e.g. "2시간","30분","300만원")
+      const m = str.match(/(\d+\.?\d*)/);
+      return m ? parseFloat(m[1]) : null;
+    };
+    const extractHours = str => {
+      // "2시간30분", "1.5시간", "2시간" → 소수 시간
+      const hm = str.match(/(\d+\.?\d*)시간(?:(\d+)분)?/);
+      if(hm) return parseFloat(hm[1]) + (hm[2] ? parseInt(hm[2])/60 : 0);
+      const mm = str.match(/(\d+)분/);
+      if(mm) return parseInt(mm[1])/60;
+      return null;
+    };
+    const extractMoney = str => {
+      // "300만원","250만","3000000원","삼백만원" → 숫자
+      const norm = str.replace(/,/g,'');
+      const m1 = norm.match(/(\d+\.?\d*)만원?/);  if(m1) return parseFloat(m1[1])*10000;
+      const m2 = norm.match(/(\d+\.?\d*)천원?/);  if(m2) return parseFloat(m2[1])*1000;
+      const m3 = norm.match(/(\d+)\s*원/);        if(m3) return parseInt(m3[1]);
+      const m4 = norm.match(/(\d{4,})/);          if(m4) return parseInt(m4[1]);
+      // 한글 숫자 + 만원
+      const km = norm.match(/([가-힣]+)만원?/);
+      if(km){ const v=korToNum(km[1]); if(v>0) return v*10000; }
+      return null;
+    };
 
-    if(workType){
-      DATA.workRecords[ds]={date:ds,type:workType,overtimes:[]};
-      save(); updateCell(ds); updatePanel();
-      setTicker('✅',`${dateLabel}(${targetDate.getDate()}일) [${workType}] 등록!`);
-      playSound('save');
-    } else if(cmd.includes('월급')||cmd.includes('얼마')){
-      const key=getActiveKey();
-      const net=key?Math.floor(calcStats(key).totalSalary).toLocaleString()+'원':'-';
-      setTicker('💰',`이번 달 예상 실수령액: ${net}`);
-    } else if(cmd.includes('삭제')){
-      if(DATA.workRecords[ds]){
-        delete DATA.workRecords[ds]; save(); updateCell(ds); updatePanel();
-        setTicker('🗑️',`${dateLabel}(${targetDate.getDate()}일) 기록 삭제`);
-        playSound('delete');
-      } else { setTicker('❓',`${dateLabel}에 삭제할 기록이 없습니다`); }
-    } else {
-      setTicker('❓','"오늘 야간", "내일 주간", "어제 삭제" 처럼 말씀해 주세요');
+    /* ── 날짜 해석 ── */
+    // 기본: 오늘/어제/내일
+    let targetDate = new Date(today);
+    let dateLabel  = '오늘';
+    let multiDates = null; // 여러 날짜 배열
+
+    if(cmd.includes('어제'))      { targetDate.setDate(today.getDate()-1); dateLabel='어제'; }
+    else if(cmd.includes('내일')) { targetDate.setDate(today.getDate()+1); dateLabel='내일'; }
+
+    // 특정 날짜: "12일", "5일" (이번달 기준)
+    const dayMatch = cmd.match(/(\d{1,2})일/);
+    if(dayMatch && !cmd.includes('오늘') && !cmd.includes('어제') && !cmd.includes('내일')
+       && !cmd.includes('이번주') && !cmd.includes('이번달') && !cmd.match(/(\d{1,2})일부터/)) {
+      const d = parseInt(dayMatch[1]);
+      if(d >= 1 && d <= 31) {
+        targetDate = new Date(today.getFullYear(), today.getMonth(), d);
+        dateLabel  = `${d}일`;
+      }
     }
-    setTimeout(()=>{ if(!isListening) rotateTicker(); }, 4000);
+
+    // 기간 일괄 등록: "N일부터 M일까지", "이번주 월~금", "월요일~금요일"
+    const rangeMatch = cmd.match(/(\d{1,2})일부터(\d{1,2})일(?:까지)?/);
+    const weekMatch  = cmd.match(/이번주([월화수목금토일]+)[~·-]([월화수목금토일]+)/);
+    const weekMatch2 = cmd.match(/이번주/);
+    const DOW_KR     = ['일','월','화','수','목','금','토'];
+
+    if(rangeMatch) {
+      const s=parseInt(rangeMatch[1]), e=parseInt(rangeMatch[2]);
+      const yr=today.getFullYear(), mo=today.getMonth();
+      multiDates=[];
+      for(let dd=s;dd<=e;dd++) multiDates.push(new Date(yr,mo,dd));
+      dateLabel=`${s}일~${e}일`;
+    } else if(weekMatch) {
+      const sDay=DOW_KR.indexOf(weekMatch[1]), eDay=DOW_KR.indexOf(weekMatch[2]);
+      if(sDay>=0 && eDay>=0) {
+        const mon=new Date(today); mon.setDate(today.getDate()-today.getDay()+1);
+        multiDates=[];
+        for(let i=0;i<7;i++){
+          const wd=new Date(mon); wd.setDate(mon.getDate()+i);
+          const dow=wd.getDay();
+          if(dow>=sDay && dow<=eDay) multiDates.push(wd);
+        }
+        dateLabel=`이번주 ${weekMatch[1]}~${weekMatch[2]}`;
+      }
+    } else if(weekMatch2 && cmd.match(/월~금|월요일~금요일|평일/)) {
+      const mon=new Date(today); mon.setDate(today.getDate()-today.getDay()+1);
+      multiDates=[];
+      for(let i=0;i<5;i++){ const d=new Date(mon); d.setDate(mon.getDate()+i); multiDates.push(d); }
+      dateLabel='이번주 월~금';
+    }
+
+    /* ── 근무 형태 파싱 ── */
+    let workType = null;
+    if(cmd.includes('주간특근'))                                workType='주간특근';
+    else if(cmd.includes('야간특근'))                           workType='야간특근';
+    else if(cmd.includes('야간퇴근')||cmd.includes('칠서'))     workType='야간퇴근(칠서)';
+    else if(cmd.includes('주간'))                               workType='주간';
+    else if(cmd.includes('야간'))                               workType='야간';
+    else if(cmd.includes('휴가')||cmd.includes('연차'))         workType='휴가';
+    else if(cmd.includes('반차'))                               workType='반차';
+    else if(cmd.includes('휴무'))                               workType='휴무';
+    else if(cmd.includes('17시'))                               workType='17시퇴근';
+
+    /* ── 잔업 시간 파싱 ── */
+    const hasOT     = cmd.includes('잔업') || cmd.includes('연장');
+    const otHours   = hasOT ? extractHours(raw) : null;
+
+    /* ══════════════════════════════
+       명령 분기
+    ══════════════════════════════ */
+
+    // ① 화면 전환
+    if(cmd.match(/통계(보여줘|열어줘|이동|탭)?$/) || cmd.match(/통계(탭|화면|뷰)/)) {
+      fabNav('stats'); setTicker('📊','통계 화면으로 이동했어요'); playSound('open'); return done();
+    }
+    if(cmd.match(/설정(보여줘|열어줘|이동|탭)?$/) || cmd.match(/설정(탭|화면|메뉴)/)) {
+      fabNav('settings'); setTicker('⚙️','설정 화면으로 이동했어요'); playSound('open'); return done();
+    }
+    if(cmd.match(/달력(보여줘|열어줘|이동|탭)?$/) || cmd.match(/달력(탭|화면)/)) {
+      fabNav('calendar'); setTicker('📅','달력 화면으로 이동했어요'); playSound('open'); return done();
+    }
+
+    // ② 목표 급여 설정
+    if(cmd.includes('목표')) {
+      const amount = extractMoney(raw);
+      if(amount && amount > 0) {
+        DATA.settings.goalSalary = amount;
+        save(); updateCalWidgets();
+        const gi = document.getElementById('goal-salary-input');
+        if(gi) gi.value = amount;
+        setTicker('🎯',`목표 급여를 ${fmtWon(amount)}으로 설정했어요`);
+        playSound('save'); return done();
+      }
+      setTicker('❓','"목표 250만원" 처럼 말씀해 주세요'); return done();
+    }
+
+    // ③ 기본급 변경
+    if(cmd.includes('기본급')) {
+      const amount = extractMoney(raw);
+      if(amount && amount > 0) {
+        const key = getActiveKey();
+        if(key) {
+          if(key.endsWith('-12') && janTab==='prev') DATA.settings.prevYearBasePays[key] = amount;
+          else DATA.settings.basePays[key] = amount;
+          save(); loadPanelUI(); updatePanel();
+          setTicker('💴',`기본급을 ${fmtWon(amount)}으로 설정했어요`);
+          playSound('save'); return done();
+        }
+      }
+      setTicker('❓','"기본급 300만원" 처럼 말씀해 주세요'); return done();
+    }
+
+    // ④ 월간 통계 조회
+    if(cmd.includes('이번달')||cmd.includes('이번 달')||cmd.includes('월급')||cmd.includes('얼마')) {
+      const key = getActiveKey();
+      if(!key) { setTicker('❓','달력 화면에서 사용해 주세요'); return done(); }
+      const s = calcStats(key);
+      if(cmd.includes('야간')) {
+        setTicker('🌙',`이번 달 야간: ${s.nightDays}일 (${fmtWon(s.nightAmount)})`);
+      } else if(cmd.includes('특근')) {
+        setTicker('💪',`이번 달 특근: ${s.specialDays}일 (${fmtWon(s.specialAmount)})`);
+      } else if(cmd.includes('잔업')||cmd.includes('연장')) {
+        const tot=(s.weekdayOT+s.specialOT).toFixed(1);
+        setTicker('⏱️',`이번 달 잔업: ${tot}h (${fmtWon(s.totalOvertimePay)})`);
+      } else {
+        const net = Math.floor(s.totalSalary).toLocaleString();
+        setTicker('💰',`이번 달 예상 실수령: ${net}원`);
+      }
+      playSound('click'); return done();
+    }
+
+    // ⑤ 이번 달 근무 현황 확인
+    if(cmd.includes('현황')||cmd.includes('근무현황')||cmd.includes('근무확인')) {
+      const key = getActiveKey();
+      if(!key) { setTicker('❓','달력 화면에서 사용해 주세요'); return done(); }
+      const s = calcStats(key);
+      const total = Object.values(DATA.workRecords).filter(r => {
+        const d = new Date(r.date);
+        const rk = getPeriodKey(d);
+        return rk === key;
+      }).length;
+      setTicker('📋',`야간 ${s.nightDays}일 / 특근 ${s.specialDays}일 / 잔업 ${(s.weekdayOT+s.specialOT).toFixed(1)}h / 등록 ${total}일`);
+      playSound('click'); return done();
+    }
+
+    // ⑥ 잔업 시간 등록 (근무형태 없이 "오늘 잔업 2시간")
+    if(hasOT && otHours !== null && !workType) {
+      const ds = fmtDate(targetDate);
+      const rec = DATA.workRecords[ds];
+      if(!rec || rec.type==='미선택') {
+        setTicker('❓',`${dateLabel}에 먼저 근무 형태를 등록해 주세요`); return done();
+      }
+      const roundedH = Math.round(otHours * 2) / 2; // 0.5h 단위
+      rec.overtimes = [{ name:'VUI잔업', time: roundedH }];
+      save(); updateCell(ds); updatePanel();
+      setTicker('⏱️',`${dateLabel}(${targetDate.getDate()}일) 잔업 ${roundedH}h 등록!`);
+      playSound('save'); return done();
+    }
+
+    // ⑦ 근무 형태 + 잔업 동시 등록 ("오늘 야간 잔업 2시간")
+    if(workType && hasOT && otHours !== null) {
+      const dates = multiDates || [targetDate];
+      dates.forEach(dt => {
+        const ds = fmtDate(dt);
+        const roundedH = Math.round(otHours * 2) / 2;
+        DATA.workRecords[ds] = { date:ds, type:workType, overtimes:[{name:'VUI잔업',time:roundedH}] };
+        save(); updateCell(ds);
+      });
+      updatePanel();
+      const cnt = dates.length > 1 ? `${dateLabel} ${dates.length}일` : `${dateLabel}(${targetDate.getDate()}일)`;
+      setTicker('✅',`${cnt} [${workType}] + 잔업 ${Math.round(otHours*2)/2}h 등록!`);
+      playSound('save'); return done();
+    }
+
+    // ⑧ 근무 형태 등록 (단일/기간)
+    if(workType) {
+      const dates = multiDates || [targetDate];
+      dates.forEach(dt => {
+        const ds = fmtDate(dt);
+        DATA.workRecords[ds] = { date:ds, type:workType, overtimes:[] };
+        save(); updateCell(ds);
+      });
+      updatePanel();
+      if(dates.length > 1) {
+        setTicker('✅',`${dateLabel} ${dates.length}일 [${workType}] 일괄 등록!`);
+      } else {
+        setTicker('✅',`${dateLabel}(${targetDate.getDate()}일) [${workType}] 등록!`);
+      }
+      playSound('save'); return done();
+    }
+
+    // ⑨ 삭제
+    if(cmd.includes('삭제')||cmd.includes('취소')||cmd.includes('지워')) {
+      const dates = multiDates || [targetDate];
+      let cnt = 0;
+      dates.forEach(dt => {
+        const ds = fmtDate(dt);
+        if(DATA.workRecords[ds]){ delete DATA.workRecords[ds]; save(); updateCell(ds); cnt++; }
+      });
+      updatePanel();
+      if(cnt > 0) {
+        const lbl = dates.length > 1 ? `${dateLabel} ${cnt}일` : `${dateLabel}(${targetDate.getDate()}일)`;
+        setTicker('🗑️',`${lbl} 기록 삭제`); playSound('delete');
+      } else {
+        setTicker('❓',`${dateLabel}에 삭제할 기록이 없습니다`);
+      }
+      return done();
+    }
+
+    // ⑩ 도움말
+    setTicker('💡','예: "오늘 야간" · "12일 주간특근" · "이번주 월~금 주간" · "오늘 잔업 2시간" · "기본급 300만원" · "목표 250만원" · "이번달 야간" · "통계 보여줘"');
+    return done();
+
+    function done() { setTimeout(()=>{ if(!isListening) rotateTicker(); }, 4500); }
   };
 
   /* 음성 인식 초기화 */
@@ -4186,8 +4479,43 @@ const VUI = (() => {
     if(mr) mr.style.display='none';
   };
 
-  return { init, toggle, _setTicker:setTicker, applyEnabled, setSpeechPref, forceFallback };
+  return { init, toggle, _setTicker:setTicker, _processCmd:processCommand, applyEnabled, setSpeechPref, forceFallback };
 })();
+
+/* 위젯(달성도/추이) 온오프 토글 */
+const toggleCalWidgets = () => {
+  const widgets = document.getElementById('cal-widgets');
+  const btn     = document.getElementById('fi-widget-toggle');
+  const lbl     = document.getElementById('fi-widget-label');
+  if (!widgets) return;
+
+  const hidden = widgets.classList.toggle('widgets-hidden');
+
+  if (btn) {
+    btn.classList.toggle('widget-on',  !hidden);
+    btn.classList.toggle('widget-off',  hidden);
+  }
+  if (lbl) lbl.textContent = hidden ? '위젯 표시' : '위젯 숨기기';
+
+  // 상태 저장
+  if (typeof DATA !== 'undefined') {
+    DATA.settings.widgetsHidden = hidden;
+    save();
+  }
+  playSound('click');
+};
+
+/* 텍스트 직접 명령어 실행 */
+window.vuiRunTextCmd = () => {
+  const input = document.getElementById('vui-cmd-input');
+  if(!input) return;
+  const val = input.value.trim();
+  if(!val) return;
+  closeModal('vui-text-modal');
+  input.value = '';
+  // VUI processCommand 호출 (내부 _setTicker 경유)
+  VUI._processCmd(val);
+};
 
 const toggleVoiceRecognition = () => {
   if(typeof DATA !== 'undefined' && !DATA.settings.vuiEnabled) {
@@ -4227,6 +4555,17 @@ document.addEventListener('DOMContentLoaded',()=>{
     updateVuiLamp('off');
   }
   updateCalWidgets();
+
+  // 위젯 숨김 상태 복원
+  if (DATA.settings.widgetsHidden) {
+    const widgets = document.getElementById('cal-widgets');
+    const btn     = document.getElementById('fi-widget-toggle');
+    const lbl     = document.getElementById('fi-widget-label');
+    if (widgets) widgets.classList.add('widgets-hidden');
+    if (btn) { btn.classList.remove('widget-on'); btn.classList.add('widget-off'); }
+    if (lbl) lbl.textContent = '위젯 표시';
+  }
+
   syncLayout();
   setTimeout(syncLayout,100);
   setTimeout(syncLayout,400);
