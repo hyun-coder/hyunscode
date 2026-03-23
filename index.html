@@ -1016,18 +1016,109 @@ body.no-scroll{overflow:hidden;touch-action:none;}
 /* 목록 (반변경/잔업/공휴일) */
 .list-wrap{padding:10px var(--pad);}
 /* 목록 항목 – 간격 충분히 */
-.list-item{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
-.list-item input{
-  flex:1;padding:8px 10px;
+/* ── 상세설정 바텀시트 ── */
+.ds-sheet{
+  /* modal 내부 flex 영향 무시 → 직접 화면 하단 고정 */
+  position:fixed;
+  bottom:0;left:0;right:0;
+  z-index:601; /* modal(600) 위 */
+  width:100%;
+  max-width:560px;
+  margin:0 auto;
+  max-height:88vh;
+  /* 내부 스크롤을 위한 flex column */
+  display:flex;flex-direction:column;
+  /* 시각 스타일 */
+  background:linear-gradient(180deg,rgba(32,36,58,.97),rgba(20,24,42,.96));
+  backdrop-filter:blur(48px) saturate(220%);
+  -webkit-backdrop-filter:blur(48px) saturate(220%);
+  border-radius:24px 24px 0 0;
+  border-top:1.5px solid rgba(255,255,255,.13);
+  box-shadow:0 -8px 40px rgba(0,0,0,.55);
+  animation:sheetUp .28s cubic-bezier(.4,0,.2,1);
+  overflow:hidden;
+}
+:root.light .ds-sheet{
+  background:linear-gradient(180deg,rgba(255,255,255,.97),rgba(245,248,255,.95));
+  border-top-color:rgba(0,0,0,.08);
+}
+/* 목록 (반변경/잔업/공휴일) */
+.list-wrap{
+  padding:10px var(--pad);
+  max-height:45vh;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+
+.ds-hdr{
+  flex-shrink:0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:14px 16px 10px;
+  border-bottom:1px solid var(--bd);
+  min-height:52px;
+}
+.ds-body{
+  flex:1;
+  min-height:0;        /* ← flex 자식의 overflow 작동 핵심 */
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior-y:contain;
+  padding:14px var(--pad);
+  padding-bottom:max(32px,env(safe-area-inset-bottom));
+}
+
+/* ── list-item: 설정 목록 행 ── */
+.list-item{
+  display:flex;align-items:center;
+  gap:6px;margin-bottom:8px;
+  width:100%;min-width:0;
+  box-sizing:border-box;
+}
+/* 텍스트 입력: 남은 공간 모두 차지 */
+.list-item input[type="text"],.list-item input:not([type]){
+  flex:1 1 0;min-width:0;
+  padding:9px 10px;
   background:var(--bg2);border:1.5px solid var(--bd2);
-  border-radius:var(--r-sm);color:var(--txt);font-size:.83em;outline:none;
+  border-radius:var(--r-sm);color:var(--txt);font-size:.84em;outline:none;
+  box-sizing:border-box;
+}
+/* 날짜 입력: 고정 너비 */
+.list-item input[type="date"]{
+  flex:0 0 auto;width:130px;min-width:0;
+  padding:9px 6px;
+  background:var(--bg2);border:1.5px solid var(--bd2);
+  border-radius:var(--r-sm);color:var(--txt);font-size:.78em;outline:none;
+  box-sizing:border-box;
 }
 .list-item input:focus{border-color:var(--cyan);}
+/* select: 내용에 맞게 고정, 최소/최대 제한 */
 .list-item select{
-  flex:0 0 72px;padding:8px 5px;
+  flex:0 0 auto;width:72px;
+  padding:9px 2px;
   background:var(--bg2);border:1.5px solid var(--bd2);
   border-radius:var(--r-sm);color:var(--txt);font-size:.8em;outline:none;
+  box-sizing:border-box;
+  -webkit-appearance:none;appearance:none;
+  text-align:center;
 }
+/* 잔업 시간 숫자 입력 */
+.list-item input[type="number"]{
+  flex:0 0 58px;width:58px;
+  padding:9px 4px;
+  background:var(--bg2);border:1.5px solid var(--bd2);
+  border-radius:var(--r-sm);color:var(--txt);font-size:.84em;outline:none;
+  box-sizing:border-box;text-align:center;
+  -moz-appearance:textfield;
+}
+.list-item input[type="number"]::-webkit-inner-spin-button,
+.list-item input[type="number"]::-webkit-outer-spin-button{
+  -webkit-appearance:none;margin:0;
+}
+.list-item input[type="number"]:focus{border-color:var(--cyan);}
+/* 반 선택 select는 조금 더 넓게 */
+.list-item select.cls-sel{width:60px;}
+/* 삭제버튼: 절대 줄어들지 않음 */
+.list-item .ibtn-xs{flex:0 0 28px;width:28px;height:28px;}
 
 /* ═══════════════════════════════════════════════
    FAB NAV
@@ -1044,7 +1135,7 @@ body.no-scroll{overflow:hidden;touch-action:none;}
 }
 #fab-wrap{
   position:fixed;
-  bottom:max(24px, env(safe-area-inset-bottom, 24px));
+  bottom:max(28px, env(safe-area-inset-bottom, 28px));
   left:50%;transform:translateX(-50%);
   z-index:500;display:flex;flex-direction:column;align-items:center;gap:9px;
 }
@@ -1091,9 +1182,9 @@ body.no-scroll{overflow:hidden;touch-action:none;}
 :root.light .fab-item{background:rgba(255,255,255,.85);border-color:rgba(0,0,0,.1);}
 :root.light .fab-item.active{background:rgba(6,182,212,.12);border-color:rgba(6,182,212,.35);}
 
-#fab-row{display:flex;align-items:center;position:relative;gap:10px;}
+#fab-row{display:flex;align-items:center;position:relative;gap:8px;}
 #fab-btn{
-  width:58px;height:58px;border-radius:20px;
+  width:56px;height:56px;border-radius:18px;
   background:linear-gradient(145deg,#38d8f5,#0891b2 60%,#0671a0);
   border:1.5px solid rgba(56,216,245,.4);
   color:#fff;font-size:1.5em;
@@ -1118,7 +1209,7 @@ body.no-scroll{overflow:hidden;touch-action:none;}
   border-radius:50%;
 }
 #fab-label{
-  position:absolute;right:126px; /* fab-btn(58) + gap(10) + mic(48) + gap(10) = 126 */
+  position:absolute;right:124px; /* fab-btn(56) + gap(10) + mic(52) + gap(6) = 124 */
   background:var(--surface);color:var(--cyan);
   padding:6px 13px;border-radius:20px;
   font-size:.8em;font-weight:800;white-space:nowrap;
@@ -1440,12 +1531,7 @@ body::after {
 }
 
 /* 마이크 버튼 라이트모드 */
-:root.light #fab-mic-btn {
-  background: var(--cyan-bg);
-  border-color: var(--cyan-bd);
-}
-
-/* ibtn 글라스 shimmer 강화 */
+:root.light /* ibtn 글라스 shimmer 강화 */
 .ibtn::before {
   content:'';
   position:absolute;inset:0;border-radius:inherit;
@@ -1642,11 +1728,65 @@ input::placeholder { color: var(--txt3); }
 .modal-sheet, #fab-menu, .panel-body {
   will-change: transform;
 }
-.calendar-month {
+/* calendar-month: 스크롤 중 opacity 변경 시에만 레이어 생성 (상시 점유 제거) */
+.calendar-month.will-animate {
   will-change: opacity;
 }
 #fixed-top {
   will-change: height;
+}
+
+/* ── PWA 설치 유도 배너 ── */
+#pwa-banner{
+  position:fixed;bottom:0;left:0;right:0;z-index:450;
+  background:linear-gradient(135deg,rgba(30,34,58,.97),rgba(18,22,42,.96));
+  border-top:1.5px solid rgba(56,189,248,.35);
+  padding:12px var(--pad) max(14px,env(safe-area-inset-bottom));
+  display:none;flex-direction:column;gap:10px;
+  box-shadow:0 -4px 24px rgba(0,0,0,.4),inset 0 1px 0 rgba(56,189,248,.15);
+  animation:bannerUp .35s cubic-bezier(.4,0,.2,1);
+}
+@keyframes bannerUp{from{transform:translateY(100%);}to{transform:translateY(0);}}
+#pwa-banner.show{display:flex;}
+.pwa-banner-row{display:flex;align-items:center;gap:12px;}
+.pwa-banner-icon{
+  width:44px;height:44px;border-radius:12px;flex-shrink:0;
+  background:linear-gradient(145deg,rgba(56,189,248,.3),rgba(8,145,178,.2));
+  border:1.5px solid rgba(56,189,248,.4);
+  display:flex;align-items:center;justify-content:center;color:var(--cyan);
+  box-shadow:0 0 16px rgba(56,189,248,.2);
+}
+.pwa-banner-txt{flex:1;min-width:0;}
+.pwa-banner-title{font-size:.9em;font-weight:800;color:var(--txt);margin-bottom:2px;}
+.pwa-banner-sub{font-size:.74em;color:var(--txt2);line-height:1.4;}
+.pwa-banner-btns{display:flex;gap:8px;}
+#pwa-install-btn{
+  flex:1;min-height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--cyan),#0891b2);
+  border:none;color:#fff;font-size:.88em;font-weight:800;
+  cursor:pointer;box-shadow:0 3px 14px rgba(56,189,248,.4);
+  display:flex;align-items:center;justify-content:center;gap:6px;
+}
+#pwa-dismiss-btn{
+  min-height:44px;padding:0 14px;border-radius:12px;
+  border:1.5px solid var(--bd2);background:transparent;
+  color:var(--txt3);font-size:.82em;font-weight:700;cursor:pointer;
+}
+:root.light #pwa-banner{
+  background:linear-gradient(135deg,rgba(240,244,255,.97),rgba(225,232,252,.96));
+  border-color:rgba(3,105,161,.3);
+}
+
+/* ── 상세설정 행 탭 피드백 ── */
+.set-row[onclick]{cursor:pointer;}
+.set-row[onclick]:active{background:rgba(56,189,248,.07)!important;}
+#settings-view{
+  padding:var(--pad);
+  padding-bottom:170px;
+  height:calc(100vh - var(--fixed-top-h, 120px));
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
 }
 
 /* ── 달력 하단 여백 (플로팅버튼 겹침 방지) ── */
@@ -1658,6 +1798,11 @@ input::placeholder { color: var(--txt3); }
 #cal-widgets.widgets-hidden > #goal-gauge-wrap,
 #cal-widgets.widgets-hidden > #sparkline-wrap {
   display: none !important;
+}
+#cal-widgets.widgets-hidden {
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+  gap: 0 !important;
 }
 
 /* ── FAB 위젯 토글 아이템 ── */
@@ -1712,9 +1857,10 @@ a, button, [onclick], label {
   -webkit-overflow-scrolling: touch;
 }
 /* Android/iOS 텍스트 선택 방지 (UI 요소) */
-.ibtn, .tbtn, .jan-tab, .wt-lbl, .fab-item, #fab-btn, #panel-toggle {
+.ibtn, .tbtn, .jan-tab, .wt-lbl, .fab-item, #fab-btn, #panel-toggle, #fab-mic-btn {
   -webkit-user-select: none;
   user-select: none;
+  touch-action: manipulation;
 }
 
 
@@ -1735,6 +1881,51 @@ input[enterkeyhint], input[inputmode] {
 
 /* 통계 공제합계 – st-red 변수로 통일 */
 #stats-dash-deduct { color: var(--st-red) !important; font-weight: 900 !important; }
+
+/* ═══════════════════════════════════════════════
+   VUI 음성 오버레이
+═══════════════════════════════════════════════ */
+#vui-overlay{position:fixed;inset:0;z-index:800;background:rgba(8,10,20,.78);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:none;flex-direction:column;align-items:center;justify-content:center;gap:0;}
+#vui-overlay.vui-ov-open{display:flex;animation:vuiOvIn .25s ease;}
+@keyframes vuiOvIn{from{opacity:0}to{opacity:1}}
+#vui-arc-wrap{position:relative;width:200px;height:200px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+#vui-arc-svg{position:absolute;inset:0;width:100%;height:100%;animation:arcSpin 2s linear infinite;transform-origin:center center;}
+@keyframes arcSpin{to{transform:rotate(360deg);}}
+#vui-arc-svg.arc-idle{animation:none;opacity:.35;}
+.arc-track{fill:none;stroke:rgba(56,189,248,.12);stroke-width:3;}
+.arc-active{fill:none;stroke:url(#arcGrad);stroke-width:3;stroke-linecap:round;stroke-dasharray:220 400;filter:drop-shadow(0 0 6px rgba(56,189,248,.8));}
+.arc-active2{fill:none;stroke:url(#arcGrad2);stroke-width:2;stroke-linecap:round;stroke-dasharray:80 540;stroke-dashoffset:200;filter:drop-shadow(0 0 4px rgba(134,239,172,.6));animation:arcSpin2 3s linear infinite;transform-origin:center center;}
+@keyframes arcSpin2{to{transform:rotate(-360deg);}}
+#vui-pulse-ring{position:absolute;inset:20px;border-radius:50%;border:1.5px solid rgba(56,189,248,.25);animation:aPulse 1.4s ease-in-out infinite;}
+#vui-pulse-ring2{position:absolute;inset:35px;border-radius:50%;border:1.5px solid rgba(56,189,248,.15);animation:aPulse 1.4s ease-in-out infinite .3s;}
+@keyframes aPulse{0%,100%{transform:scale(1);opacity:.6;}50%{transform:scale(1.06);opacity:1;}}
+#vui-pulse-ring.arc-idle,#vui-pulse-ring2.arc-idle{animation:none;opacity:.15;}
+#vui-arc-center{position:relative;z-index:2;width:72px;height:72px;border-radius:50%;background:linear-gradient(145deg,rgba(56,189,248,.28),rgba(8,145,178,.18));border:2px solid rgba(56,189,248,.45);box-shadow:0 0 28px rgba(56,189,248,.3),inset 0 1px 0 rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;color:var(--cyan);transition:all .3s ease;}
+#vui-arc-center.arc-listening{background:linear-gradient(145deg,rgba(252,165,165,.28),rgba(185,28,28,.18));border-color:rgba(252,165,165,.55);color:var(--red);box-shadow:0 0 36px rgba(252,165,165,.45),inset 0 1px 0 rgba(255,255,255,.18);animation:cPulse 1s ease-in-out infinite;}
+@keyframes cPulse{0%,100%{box-shadow:0 0 28px rgba(252,165,165,.35);}50%{box-shadow:0 0 52px rgba(252,165,165,.7);}}
+#vui-transcript-panel{width:88%;max-width:420px;min-height:80px;margin-top:28px;background:linear-gradient(160deg,rgba(30,34,58,.96),rgba(18,22,42,.93));border:1.5px solid rgba(56,189,248,.28);border-radius:20px;padding:16px 20px;display:flex;flex-direction:column;align-items:center;gap:8px;box-shadow:0 8px 32px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.08);}
+#vui-transcript-label{font-size:.72rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--cyan);opacity:.75;}
+#vui-transcript-text{font-size:1.3rem;font-weight:700;color:var(--txt);text-align:center;line-height:1.4;min-height:1.6em;word-break:keep-all;transition:color .2s ease;}
+#vui-transcript-text.interim{color:var(--txt2);font-style:italic;}
+#vui-ov-bars{display:flex;align-items:center;gap:4px;height:26px;margin-top:2px;}
+.ov-bar{width:4px;border-radius:3px;background:linear-gradient(to top,var(--cyan),var(--cyan2));box-shadow:0 0 5px rgba(56,189,248,.45);animation:ovBounce .5s ease-in-out infinite alternate;}
+.ov-bar:nth-child(1){height:8px;animation-delay:.00s;}.ov-bar:nth-child(2){height:16px;animation-delay:.10s;}.ov-bar:nth-child(3){height:22px;animation-delay:.20s;}.ov-bar:nth-child(4){height:16px;animation-delay:.30s;}.ov-bar:nth-child(5){height:8px;animation-delay:.40s;}.ov-bar:nth-child(6){height:14px;animation-delay:.15s;}.ov-bar:nth-child(7){height:20px;animation-delay:.25s;}
+@keyframes ovBounce{from{transform:scaleY(.35);opacity:.5;}to{transform:scaleY(1);opacity:1;}}
+#vui-ov-bars.bars-idle .ov-bar{animation:none;transform:scaleY(.3);opacity:.25;}
+#vui-ov-close{margin-top:22px;padding:11px 32px;border-radius:24px;border:1.5px solid rgba(255,255,255,.18);background:rgba(255,255,255,.08);color:var(--txt2);font-size:.9rem;font-weight:700;cursor:pointer;box-shadow:0 3px 12px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.1);transition:all .18s ease;-webkit-user-select:none;user-select:none;}
+#vui-ov-close:active{transform:scale(.92);}
+/* VUI 팁 칩 */
+.vui-chip{display:inline-block;border-radius:20px;padding:4px 10px;font-size:.73em;font-weight:700;border:1px solid;}
+.vui-chip.cyan{background:var(--cyan-bg);border-color:var(--cyan-bd);color:var(--cyan);}
+.vui-chip.orange{background:var(--orange-bg);border-color:var(--orange-bd);color:var(--orange);}
+.vui-chip.purple{background:var(--purple-bg);border-color:rgba(196,181,253,.35);color:var(--purple);}
+.vui-chip.green{background:var(--green-bg);border-color:rgba(134,239,172,.35);color:var(--green);}
+.vui-chip.red{background:var(--red-bg);border-color:var(--red-bd);color:var(--red);}
+:root.light #vui-overlay{background:rgba(220,228,248,.88);}
+:root.light #vui-transcript-panel{background:linear-gradient(160deg,rgba(255,255,255,.97),rgba(238,244,255,.95));border-color:rgba(3,105,161,.28);}
+#utility-ticker-container{height:52px !important;}
+#ticker-icon{font-size:1.1rem;}
+#ticker-text{font-size:.95rem !important;font-weight:600 !important;color:var(--txt) !important;}
 
 /* ═══════════════════════════════════════════════
    VUI – 유틸리티 티커 바 (index.html 통합)
@@ -1803,7 +1994,7 @@ input[enterkeyhint], input[inputmode] {
 /* 마이크 FAB 버튼 */
 #fab-mic-btn {
   display:inline-flex;align-items:center;justify-content:center;
-  width:50px;height:50px;border-radius:var(--r-btn);
+  width:52px;height:52px;border-radius:var(--r-btn);
   border:1.5px solid var(--cyan-bd);
   background:linear-gradient(160deg,rgba(56,189,248,.25),rgba(56,189,248,.08));
   backdrop-filter:blur(20px) saturate(180%);
@@ -1820,6 +2011,7 @@ input[enterkeyhint], input[inputmode] {
   pointer-events:none;
 }
 #fab-mic-btn:active { transform:scale(.84)!important;box-shadow:0 1px 6px rgba(56,189,248,.25),inset 0 2px 4px rgba(0,0,0,.2)!important; }
+:root.light #fab-mic-btn { background:var(--cyan-bg); border-color:var(--cyan-bd); }
 #fab-mic-btn.mic-listening {
   background: var(--red-bg);
   border-color: var(--red-bd);
@@ -2003,12 +2195,134 @@ input[enterkeyhint], input[inputmode] {
   color:var(--cyan);cursor:pointer;white-space:nowrap;
 }
 
+/* ═══════════════════════════════════════════════
+   구형폰 성능 최적화
+   – prefers-reduced-motion: 불필요한 무한 애니메이션 중단
+   – .low-perf 클래스: JS가 저사양 기기에 자동 부착
+═══════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.1ms !important;
+  }
+  .splash-bar { width: 100% !important; }
+}
+/* 저사양: backdrop-filter 완전 제거 */
+body.low-perf .ibtn,
+body.low-perf .tbtn,
+body.low-perf #base-pay-container button,
+body.low-perf .fab-item,
+body.low-perf #fab-btn,
+body.low-perf #fab-mic-btn,
+body.low-perf #panel-toggle,
+body.low-perf #fab-overlay.open,
+body.low-perf .stats-hero,
+body.low-perf .set-card,
+body.low-perf .stats-table-wrap,
+body.low-perf .stats-filters select,
+body.low-perf #utility-ticker-container,
+body.low-perf #vui-overlay {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+body.low-perf .modal-sheet,
+body.low-perf .ds-sheet,
+body.low-perf .modal-dialog {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--bg2) !important;
+}
+body.low-perf #fixed-top {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: var(--bg1) !important;
+}
+/* 저사양: 무한 루프 애니메이션 정지 */
+body.low-perf .splash-ring-outer,
+body.low-perf .splash-ring-inner,
+body.low-perf #vui-arc-svg,
+body.low-perf .arc-active2,
+body.low-perf #vui-pulse-ring,
+body.low-perf #vui-pulse-ring2 {
+  animation: none !important;
+}
+body.low-perf #app-header h1,
+body.low-perf .splash-title {
+  animation: none !important;
+  background: none !important;
+  -webkit-text-fill-color: var(--txt) !important;
+}
+body.low-perf .ov-bar {
+  animation: none !important;
+  transform: scaleY(0.6) !important;
+}
+/* 저사양: box-shadow 단순화 */
+body.low-perf .day-cell { box-shadow: none !important; }
+body.low-perf .calendar-month { box-shadow: 0 2px 8px rgba(0,0,0,.3) !important; }
+body.low-perf .ibtn, body.low-perf .tbtn { box-shadow: 0 1px 4px rgba(0,0,0,.3) !important; }
+/* 저사양: transition 간소화 */
+body.low-perf .ibtn,
+body.low-perf .tbtn,
+body.low-perf .fab-item,
+body.low-perf .jan-tab { transition: opacity 0.15s !important; }
+body.low-perf .panel-body { transition: max-height 0.25s ease !important; }
+/* 저사양: body 배경 노이즈/오로라 제거 */
+body.low-perf::after { display: none !important; }
+body.low-perf::before { animation: none !important; background: none !important; }
+
+/* ═══════════════════════════════════════════════
+   성능 최적화 모드 전환 트랜지션 알림 배너
+═══════════════════════════════════════════════ */
+#perf-toast-bar {
+  position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+  z-index: 9000; pointer-events: none;
+  background: linear-gradient(135deg, rgba(251,146,60,.92), rgba(234,88,12,.88));
+  border: 1px solid rgba(251,146,60,.5);
+  border-radius: 20px; padding: 10px 20px;
+  font-size: .84em; font-weight: 700; color: #fff;
+  box-shadow: 0 4px 20px rgba(251,146,60,.35);
+  opacity: 0; transition: opacity .3s ease;
+  white-space: nowrap;
+}
+#perf-toast-bar.show { opacity: 1; }
+
+/* 성능 등급 배지 – 색상 */
+#perf-grade-badge.grade-high { border-color: rgba(134,239,172,.4) !important; background: rgba(134,239,172,.08) !important; }
+#perf-grade-badge.grade-mid  { border-color: rgba(253,186,116,.4) !important; background: rgba(253,186,116,.08) !important; }
+#perf-grade-badge.grade-low  { border-color: rgba(252,165,165,.4) !important; background: rgba(252,165,165,.08) !important; }
+
 </style>
 </head>
 <body>
 
 <!-- SPLASH – 시네마틱 인트로 -->
 <div id="vui-toast"></div>
+
+<!-- PWA 설치 유도 배너 -->
+<div id="pwa-banner">
+  <div class="pwa-banner-row">
+    <div class="pwa-banner-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="4" width="18" height="18" rx="4"/><line x1="3" y1="9" x2="21" y2="9"/>
+        <line x1="8" y1="3" x2="8" y2="6"/><line x1="16" y1="3" x2="16" y2="6"/>
+        <circle cx="15" cy="15" r="2" fill="currentColor" stroke="none"/>
+        <line x1="10" y1="15" x2="13" y2="15" stroke-width="2"/>
+      </svg>
+    </div>
+    <div class="pwa-banner-txt">
+      <div class="pwa-banner-title">홈 화면에 추가하기</div>
+      <div class="pwa-banner-sub" id="pwa-banner-sub">앱처럼 빠르게 실행할 수 있어요</div>
+    </div>
+    <button id="pwa-dismiss-btn" onclick="pwaDismiss()">✕</button>
+  </div>
+  <div class="pwa-banner-btns">
+    <button id="pwa-install-btn" onclick="pwaInstall()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 2v13M7 11l5 5 5-5"/><path d="M3 20h18"/></svg>
+      홈 화면에 추가
+    </button>
+  </div>
+</div>
 <div id="splash">
   <!-- 파티클 배경 -->
   <div class="splash-particles" id="splash-particles"></div>
@@ -2151,6 +2465,44 @@ input[enterkeyhint], input[inputmode] {
   </div>
 </div>
 
+<!-- VUI 음성 인식 오버레이 -->
+<div id="vui-overlay">
+  <div id="vui-arc-wrap">
+    <div id="vui-pulse-ring"></div>
+    <div id="vui-pulse-ring2"></div>
+    <svg id="vui-arc-svg" viewBox="0 0 200 200">
+      <defs>
+        <linearGradient id="arcGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#38bdf8"/><stop offset="100%" stop-color="#86efac"/>
+        </linearGradient>
+        <linearGradient id="arcGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#38bdf8"/>
+        </linearGradient>
+      </defs>
+      <circle class="arc-track" cx="100" cy="100" r="90"/>
+      <circle class="arc-active" cx="100" cy="100" r="90" transform="rotate(-90 100 100)"/>
+      <circle class="arc-active2" cx="100" cy="100" r="90" transform="rotate(-90 100 100)"/>
+    </svg>
+    <div id="vui-arc-center">
+      <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="9" y="2" width="6" height="12" rx="3"/>
+        <path d="M5 10c0 3.9 3.1 7 7 7s7-3.1 7-7"/>
+        <line x1="12" y1="17" x2="12" y2="21"/>
+        <line x1="8" y1="21" x2="16" y2="21"/>
+      </svg>
+    </div>
+  </div>
+  <div id="vui-transcript-panel">
+    <div id="vui-transcript-label">🎙 듣고 있습니다</div>
+    <div id="vui-transcript-text">말씀해 주세요...</div>
+    <div id="vui-ov-bars">
+      <div class="ov-bar"></div><div class="ov-bar"></div><div class="ov-bar"></div>
+      <div class="ov-bar"></div><div class="ov-bar"></div><div class="ov-bar"></div>
+      <div class="ov-bar"></div>
+    </div>
+  </div>
+  <button id="vui-ov-close" onclick="VUI.overlayClose()">&#10005; 취소</button>
+</div>
 <!-- FAB OVERLAY -->
 <div id="fab-overlay" onclick="closeFab()"></div>
 
@@ -2325,196 +2677,177 @@ input[enterkeyhint], input[inputmode] {
   <div id="tab-settings" class="tab-pane">
     <div id="settings-view">
 
+      <!-- 사용자 정보 -->
       <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg>
-          사용자 정보
-        </div>
+        <div class="set-section-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/></svg> 사용자 정보</div>
         <div class="set-card">
           <div class="set-row">
-            <div class="set-row-icon ico-cyan">
-              <!-- 사람 아이콘 -->
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg>
-            </div>
-            <div class="set-row-body">
-              <div class="set-row-title">계정 ID</div>
-              <input type="text" id="setting-account" disabled style="opacity:.55;cursor:not-allowed;">
-            </div>
+            <div class="set-row-icon ico-cyan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="7" r="4"/><path d="M5.5 21c0-3.6 2.9-6.5 6.5-6.5s6.5 2.9 6.5 6.5"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">계정 ID</div><input type="text" id="setting-account" disabled style="opacity:.55;cursor:not-allowed;"></div>
           </div>
           <div class="set-row">
-            <div class="set-row-icon ico-orange">
-              <!-- 방패 아이콘 -->
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l7 4v5c0 5-3.5 9.5-7 11-3.5-1.5-7-6-7-11V6l7-4z"/></svg>
-            </div>
+            <div class="set-row-icon ico-orange"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l7 4v5c0 5-3.5 9.5-7 11-3.5-1.5-7-6-7-11V6l7-4z"/></svg></div>
             <div class="set-row-body">
               <div class="set-row-title">소속 반</div>
-              <select id="setting-class" onchange="saveSettings();">
-                <option value="A">A반</option><option value="B">B반</option>
-                <option value="C">C반</option><option value="D">D반</option>
-              </select>
+              <select id="setting-class" onchange="saveSettings();"><option value="A">A반</option><option value="B">B반</option><option value="C">C반</option><option value="D">D반</option></select>
               <div class="set-row-sub">* A반 야간 시작일: 2025-01-05 고정</div>
             </div>
           </div>
         </div>
       </div>
 
+      <!-- 앱 설정 -->
       <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-          반 변경 기록
-        </div>
-        <div class="set-card">
-          <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-            <div class="set-row-sub">변경일 이후 해당 반 로테이션 자동 적용</div>
-            <div id="class-change-list" style="width:100%;"></div>
-            <button class="tbtn tbtn-ghost" onclick="addClassChangeRow(); playSound('click');">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              반 변경 기록 추가
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="12"/><polyline points="12 16 12.01 16"/></svg>
-          잔업 종류 관리
-        </div>
-        <div class="set-card">
-          <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-            <div class="set-row-sub">잔업 이름과 기본 시간을 설정합니다.</div>
-            <div id="ot-list" style="width:100%;"></div>
-            <button class="tbtn tbtn-ghost" onclick="addOtRow(); playSound('click');">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              잔업 종류 추가
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9" stroke-width="2"/><line x1="8" y1="3" x2="8" y2="6"/><line x1="16" y1="3" x2="16" y2="6"/></svg>
-          사용자 지정 공휴일
-        </div>
-        <div class="set-card">
-          <div class="set-row" style="flex-direction:column;align-items:flex-start;gap:8px;">
-            <div id="holiday-list" style="width:100%;"></div>
-            <button class="tbtn tbtn-ghost" onclick="addHolidayRow(); playSound('click');">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
-              공휴일 추가
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
-          앱 설정
-        </div>
+        <div class="set-section-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M12 2v2M12 20v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M2 12h2M20 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg> 앱 설정</div>
         <div class="set-card">
           <div class="set-row">
-            <div class="set-row-icon ico-purple">
-              <!-- 달 아이콘 -->
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-            </div>
+            <div class="set-row-icon ico-purple"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg></div>
             <div class="set-row-body"><div class="set-row-title">라이트 모드</div></div>
             <label class="sw"><input type="checkbox" id="theme-toggle" onchange="toggleTheme(this.checked); playSound('toggle');"><span class="sw-trk"></span></label>
           </div>
           <div class="set-row">
-            <div class="set-row-icon ico-green">
-              <!-- 스피커 아이콘 -->
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
-            </div>
+            <div class="set-row-icon ico-green"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg></div>
             <div class="set-row-body"><div class="set-row-title">효과음</div></div>
             <label class="sw"><input type="checkbox" id="sound-toggle" onchange="toggleMute(this.checked)"><span class="sw-trk"></span></label>
           </div>
           <div class="set-row">
-            <div class="set-row-icon ico-orange">
-              <!-- 목표 아이콘 -->
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg>
+            <div class="set-row-icon ico-purple">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+              </svg>
             </div>
             <div class="set-row-body">
-              <div class="set-row-title">목표 월급</div>
-              <input type="number" inputmode="decimal" id="goal-salary-input" placeholder="예: 3500000" class="ifield" style="margin-top:4px;" oninput="saveGoalSalary()" enterkeyhint="done">
+              <div class="set-row-title">음성 출력 (TTS)</div>
+              <div class="set-row-sub">VUI 명령 결과·오류 안내를 음성으로 읽어줍니다 (기본 ON)</div>
             </div>
+            <label class="sw"><input type="checkbox" id="tts-toggle" onchange="toggleTTS(this.checked)"><span class="sw-trk"></span></label>
+          </div>
+          <div class="set-row">
+            <div class="set-row-icon ico-cyan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="3" x2="8" y2="6"/><line x1="16" y1="3" x2="16" y2="6"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">달력 도움말 표시</div><div class="set-row-sub">하단 티커 바(힌트) 표시 여부</div></div>
+            <label class="sw"><input type="checkbox" id="ticker-toggle" onchange="toggleTicker(this.checked)"><span class="sw-trk"></span></label>
+          </div>
+          <div class="set-row">
+            <div class="set-row-icon ico-orange"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">목표 월급</div><input type="number" inputmode="decimal" id="goal-salary-input" placeholder="예: 3500000" class="ifield" style="margin-top:4px;" oninput="saveGoalSalary()" enterkeyhint="done"></div>
           </div>
         </div>
       </div>
 
-      <!-- VUI 설정 섹션 -->
+      <!-- VUI 설정 -->
       <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10c0 3.9 3.1 7 7 7s7-3.1 7-7"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          VUI 음성/텍스트 입력
-        </div>
+        <div class="set-section-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10c0 3.9 3.1 7 7 7s7-3.1 7-7"/><line x1="12" y1="17" x2="12" y2="21"/></svg> VUI 설정</div>
         <div class="set-card">
-
-          <!-- VUI 사용 토글 -->
           <div class="set-row">
-            <div class="set-row-icon ico-cyan">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10c0 3.9 3.1 7 7 7s7-3.1 7-7"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-            </div>
-            <div class="set-row-body">
-              <div class="set-row-title">VUI 사용</div>
-              <div class="set-row-sub">음성 또는 텍스트 명령으로 근무 등록·잔업·기간일괄·기본급/목표 설정·통계조회·화면전환 지원</div>
-            </div>
+            <div class="set-row-icon ico-cyan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10c0 3.9 3.1 7 7 7s7-3.1 7-7"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">VUI 사용</div><div class="set-row-sub">음성/텍스트 명령 입력</div></div>
             <label class="sw"><input type="checkbox" id="vui-toggle" onchange="toggleVuiSetting(this.checked);"><span class="sw-trk"></span></label>
           </div>
+          <div id="vui-perm-status"><div id="vui-perm-dot" class="gray"></div><span id="vui-perm-label">VUI를 활성화하면 상태를 확인합니다</span><button id="vui-perm-check-btn" onclick="checkVuiPermission()" style="display:none;">권한 확인</button></div>
+          <div id="vui-mode-row" class="set-row" style="display:none;margin-top:4px;">
+            <div class="set-row-icon ico-purple"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">음성 인식 우선</div><div class="set-row-sub" id="vui-mode-sub">지원 기기: 음성 → 미지원: 텍스트 자동 전환</div></div>
+            <label class="sw"><input type="checkbox" id="vui-speech-toggle" onchange="toggleVuiSpeechPref(this.checked);"><span class="sw-trk"></span></label>
+          </div>
+        </div>
+      </div>
 
-          <!-- 권한 상태 표시 -->
-          <div id="vui-perm-status">
-            <div id="vui-perm-dot" class="gray"></div>
-            <span id="vui-perm-label">VUI를 활성화하면 상태를 확인합니다</span>
-            <button id="vui-perm-check-btn" onclick="checkVuiPermission()" style="display:none;">권한 확인</button>
+      <!-- 성능 최적화 모드 -->
+      <div class="set-section" id="perf-section">
+        <div class="set-section-title">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          성능 최적화
+        </div>
+        <div class="set-card">
+          <!-- 현재 감지된 성능 등급 배지 -->
+          <div class="set-row" style="padding:10px 14px 6px;min-height:auto!important;">
+            <div id="perf-grade-badge" style="
+              display:flex;align-items:center;gap:8px;width:100%;
+              background:var(--bg3);border:1px solid var(--bd2);
+              border-radius:10px;padding:8px 12px;font-size:.78em;">
+              <span id="perf-grade-icon" style="font-size:1.2em;">⚡</span>
+              <div style="flex:1;">
+                <div id="perf-grade-label" style="font-weight:700;color:var(--txt);">기기 성능 감지 중...</div>
+                <div id="perf-grade-sub" style="color:var(--txt3);font-size:.88em;margin-top:1px;"></div>
+              </div>
+            </div>
           </div>
 
-          <!-- 음성 인식 모드 (지원 기기만 표시) -->
-          <div id="vui-mode-row" class="set-row" style="display:none;margin-top:4px;">
-            <div class="set-row-icon ico-purple">
+          <!-- 절전/최적화 모드 토글 -->
+          <div class="set-row">
+            <div class="set-row-icon" id="perf-toggle-icon" style="background:rgba(251,146,60,.15);border-color:rgba(251,146,60,.4);color:#fb923c;">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            </div>
+            <div class="set-row-body">
+              <div class="set-row-title">성능 최적화 모드</div>
+              <div class="set-row-sub" id="perf-mode-sub">구형 기기에서 앱 반응 속도를 높입니다</div>
+            </div>
+            <label class="sw">
+              <input type="checkbox" id="perf-mode-toggle" onchange="toggleLowPerfMode(this.checked)">
+              <span class="sw-trk"></span>
+            </label>
+          </div>
+
+          <!-- 적용/해제 기능 안내 버튼 -->
+          <div class="set-row" onclick="openPerfInfoSheet()" style="cursor:pointer;border-top:1px solid var(--bd);">
+            <div class="set-row-icon ico-cyan">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
             </div>
             <div class="set-row-body">
-              <div class="set-row-title">음성 인식 우선</div>
-              <div class="set-row-sub" id="vui-mode-sub">지원 기기: 음성 → 미지원: 텍스트 자동 전환</div>
+              <div class="set-row-title">최적화 모드 상세 안내</div>
+              <div class="set-row-sub">적용 ON/OFF 기능 목록 확인</div>
             </div>
-            <label class="sw"><input type="checkbox" id="vui-speech-toggle" onchange="toggleVuiSpeechPref(this.checked);"><span class="sw-trk"></span></label>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
-
         </div>
       </div>
 
+      <!-- 상세 설정 (팝업) -->
       <div class="set-section">
-        <div class="set-section-title">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-          데이터 관리
-        </div>
+        <div class="set-section-title"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg> 상세 설정</div>
         <div class="set-card">
-          <div class="set-row" style="gap:8px;flex-wrap:wrap;">
-            <!-- 백업 – 다운로드 아이콘 -->
-            <button class="tbtn tbtn-cyan" style="flex:1;min-width:80px;min-height:48px;" onclick="backupData(); playSound('save');">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              백업
-            </button>
-            <!-- 복구 – 업로드 아이콘 -->
-            <button class="tbtn tbtn-ghost" style="flex:1;min-width:80px;min-height:48px;" onclick="document.getElementById('file-input').click(); playSound('open');">
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              복구
-            </button>
-            <input type="file" id="file-input" accept="application/json" onchange="restoreData(event)" style="display:none;">
+          <div class="set-row" onclick="openDetailSheet('class-history')" style="cursor:pointer;">
+            <div class="set-row-icon ico-orange"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2l7 4v5c0 5-3.5 9.5-7 11-3.5-1.5-7-6-7-11V6l7-4z"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">반 변경 기록</div><div class="set-row-sub">반 전환 이력 관리</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="set-row" onclick="openDetailSheet('overtime')" style="cursor:pointer;">
+            <div class="set-row-icon ico-cyan"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><polyline points="12 7 12 12 15 15"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">잔업 종류 관리</div><div class="set-row-sub">잔업 항목 및 기본 시간 설정</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="set-row" onclick="openDetailSheet('holidays')" style="cursor:pointer;">
+            <div class="set-row-icon ico-red"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="3"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="8" y1="3" x2="8" y2="6"/><line x1="16" y1="3" x2="16" y2="6"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">사용자 지정 공휴일</div><div class="set-row-sub">공휴일 추가/편집</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+          <div class="set-row" onclick="openDetailSheet('data')" style="cursor:pointer;">
+            <div class="set-row-icon ico-green"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
+            <div class="set-row-body"><div class="set-row-title">데이터 관리</div><div class="set-row-sub">백업 · 복구 · 초기화</div></div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
           </div>
         </div>
-        <!-- 초기화 – 별도 카드 + 쓰레기통 아이콘 -->
-        <button class="tbtn tbtn-red tbtn-full" style="margin-top:10px;min-height:50px;" onclick="resetAllData(); playSound('delete');">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
-          모든 데이터 초기화 (주의)
-        </button>
       </div>
 
     </div>
   </div>
 </div><!-- /content-wrap -->
+
+<!-- 상세 설정 바텀시트 -->
+<div id="detail-sheet-modal" class="modal">
+  <div class="ds-sheet">
+    <div class="modal-handle"></div>
+    <div class="ds-hdr">
+      <span class="modal-title" id="detail-sheet-title">상세 설정</span>
+      <button class="ibtn ibtn-ghost ibtn-sm" onclick="closeModal('detail-sheet-modal'); playSound('click');">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <div class="ds-body" id="detail-sheet-body"></div>
+  </div>
+</div>
 
 <!-- 근무 기록 모달 (Bottom Sheet) -->
 <div id="work-modal" class="modal">
@@ -2640,17 +2973,17 @@ input[enterkeyhint], input[inputmode] {
       <div class="dlg-title">VUI 빠른 입력</div>
       <div style="font-size:.75em;color:var(--txt2);margin-top:4px;">날짜·근무형태 선택 또는 명령어 직접 입력</div>
     </div>
-    <div class="dlg-body">
+    <div class="dlg-body" style="padding-bottom:4px;">
       <!-- 날짜 선택 -->
       <div style="font-size:.8em;color:var(--txt2);margin-bottom:6px;">날짜</div>
       <div style="display:flex;gap:8px;margin-bottom:14px;">
-        <button class="tbtn tbtn-ghost tbtn-sm vui-date-btn active" data-offset="-1" onclick="vuiSetDate(-1)">어제</button>
-        <button class="tbtn tbtn-cyan  tbtn-sm vui-date-btn"        data-offset="0"  onclick="vuiSetDate(0)">오늘</button>
-        <button class="tbtn tbtn-ghost tbtn-sm vui-date-btn"        data-offset="1"  onclick="vuiSetDate(1)">내일</button>
+        <button class="tbtn tbtn-ghost tbtn-sm vui-date-btn" data-offset="-1" onclick="vuiSetDate(-1)">어제</button>
+        <button class="tbtn tbtn-cyan  tbtn-sm vui-date-btn" data-offset="0"  onclick="vuiSetDate(0)">오늘</button>
+        <button class="tbtn tbtn-ghost tbtn-sm vui-date-btn" data-offset="1"  onclick="vuiSetDate(1)">내일</button>
       </div>
       <!-- 근무 유형 선택 -->
       <div style="font-size:.8em;color:var(--txt2);margin-bottom:6px;">근무 형태</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:10px;">
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="주간"          onclick="vuiSetType(this)">☀️ 주간</button>
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="야간"          onclick="vuiSetType(this)">🌙 야간</button>
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="야간퇴근(칠서)" onclick="vuiSetType(this)">🌙 야간퇴근</button>
@@ -2661,47 +2994,53 @@ input[enterkeyhint], input[inputmode] {
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="반차"          onclick="vuiSetType(this)">🌿 반차</button>
         <button class="tbtn tbtn-ghost vui-type-btn" data-type="휴무"          onclick="vuiSetType(this)">😴 휴무</button>
       </div>
-      <!-- VUI 명령어 가이드 칩 -->
-      <div style="padding:10px var(--pad) 4px;">
-        <div style="font-size:.7em;font-weight:800;color:var(--txt3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:7px;">💬 음성 명령 예시</div>
-        <div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;">
-          <span style="background:var(--cyan-bg);border:1px solid var(--cyan-bd);color:var(--cyan);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">오늘 야간</span>
-          <span style="background:var(--cyan-bg);border:1px solid var(--cyan-bd);color:var(--cyan);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">내일 주간특근</span>
-          <span style="background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">12일 야간</span>
-          <span style="background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">이번주 월~금 주간</span>
-          <span style="background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">다음주 월요일에서 금요일 주간</span>
-          <span style="background:var(--orange-bg);border:1px solid var(--orange-bd);color:var(--orange);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">다음주 화요일 야간</span>
-          <span style="background:var(--purple-bg);border:1px solid rgba(196,181,253,.35);color:var(--purple);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">오늘 잔업 2시간</span>
-          <span style="background:var(--purple-bg);border:1px solid rgba(196,181,253,.35);color:var(--purple);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">오늘 야간 잔업 1시간30분</span>
-          <span style="background:var(--green-bg);border:1px solid rgba(134,239,172,.35);color:var(--green);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">기본급 300만원</span>
-          <span style="background:var(--green-bg);border:1px solid rgba(134,239,172,.35);color:var(--green);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">목표 250만원</span>
-          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">이번달 야간</span>
-          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">이번달 근무 현황</span>
-          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">통계 보여줘</span>
-          <span style="background:var(--red-bg);border:1px solid var(--red-bd);color:var(--red);border-radius:20px;padding:4px 10px;font-size:.75em;font-weight:700;">어제 삭제</span>
+      <div id="vui-text-selected" style="font-size:.82em;color:var(--txt3);text-align:center;min-height:18px;margin-bottom:6px;"></div>
+    </div>
+
+    <!-- 명령어 직접 입력 (항상 표시) -->
+    <div id="vui-cmd-section" style="padding:8px var(--pad);border-top:1px solid var(--bd);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+        <span style="font-size:.78em;font-weight:700;color:var(--txt2);">⌨️ 명령어 직접 입력</span>
+        <!-- 팁 버튼 (음성 활성 시에만 표시) -->
+        <button id="vui-tip-btn" onclick="vuiToggleTips()" style="display:none;font-size:.72em;padding:3px 10px;border-radius:12px;border:1px solid var(--cyan-bd);background:var(--cyan-bg);color:var(--cyan);cursor:pointer;font-weight:700;">
+          💡 명령어 팁 ▾
+        </button>
+      </div>
+      <!-- 팁 패널 (접이식, 기본 숨김) -->
+      <div id="vui-tips-panel" style="display:none;margin-bottom:8px;padding:10px 12px;background:var(--bg2);border-radius:var(--r-sm);border:1px solid var(--bd);">
+        <div style="font-size:.72em;color:var(--txt3);font-weight:700;margin-bottom:6px;letter-spacing:.06em;">음성/텍스트 명령 예시</div>
+        <div style="display:flex;flex-wrap:wrap;gap:4px;">
+          <span class="vui-chip cyan">오늘 야간</span>
+          <span class="vui-chip cyan">내일 주간특근</span>
+          <span class="vui-chip orange">12일 야간</span>
+          <span class="vui-chip orange">이번주 월~금 주간</span>
+          <span class="vui-chip orange">다음주 화요일 야간</span>
+          <span class="vui-chip purple">오늘 잔업 2시간</span>
+          <span class="vui-chip green">기본급 300만원</span>
+          <span class="vui-chip green">목표 250만원</span>
+          <span class="vui-chip red">8월 실수령액</span>
+          <span class="vui-chip red">이번달 근무 현황</span>
+          <span class="vui-chip red">8월 달력으로 이동</span>
+          <span class="vui-chip cyan">통계 보여줘</span>
+          <span class="vui-chip cyan">라이트 모드</span>
+          <span class="vui-chip red">어제 삭제</span>
         </div>
       </div>
-      <div id="vui-text-selected" style="font-size:.82em;color:var(--txt3);text-align:center;min-height:18px;"></div>
+      <div style="display:flex;gap:7px;align-items:center;">
+        <input type="text" id="vui-cmd-input" class="ifield" style="flex:1;min-height:44px;font-size:.88em;" placeholder="명령어를 입력하세요..." enterkeyhint="send"
+          onkeydown="if(event.key==='Enter'){vuiRunTextCmd();event.preventDefault();}">
+        <button class="tbtn tbtn-cyan" style="min-width:52px;min-height:44px;" onclick="vuiRunTextCmd();">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        </button>
+      </div>
     </div>
+
     <div class="dlg-actions">
-      <button class="tbtn tbtn-ghost" onclick="closeModal('vui-text-modal');playSound('click');">
-        취소
-      </button>
+      <button class="tbtn tbtn-ghost" onclick="closeModal('vui-text-modal');playSound('click');">취소</button>
       <button class="tbtn tbtn-cyan" id="vui-text-confirm" onclick="vuiTextConfirm();playSound('save');" disabled style="opacity:.45;">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
         등록
       </button>
-    </div>
-    <!-- 자유 텍스트 명령어 입력 -->
-    <div style="padding:8px var(--pad) max(14px,env(safe-area-inset-bottom));border-top:1px solid var(--bd);">
-      <div style="font-size:.72em;font-weight:800;color:var(--txt3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:6px;">⌨️ 또는 명령어 직접 입력</div>
-      <div style="display:flex;gap:7px;align-items:center;">
-        <input type="text" id="vui-cmd-input" class="ifield" style="flex:1;min-height:44px;font-size:.88em;" placeholder='"오늘 잔업 2시간", "기본급 300만원" ...' enterkeyhint="send"
-          onkeydown="if(event.key==='Enter'){vuiRunTextCmd();event.preventDefault();}">
-        <button class="tbtn tbtn-cyan" style="min-width:56px;min-height:44px;" onclick="vuiRunTextCmd();">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-        </button>
-      </div>
     </div>
   </div>
 </div>
@@ -2710,7 +3049,7 @@ input[enterkeyhint], input[inputmode] {
 /* ═══════════════════════════════════════════════
    ADMIN CONFIG
 ═══════════════════════════════════════════════ */
-const ADMIN_NOTICE = "■전체앱 리뉴얼\n●급여추세차트,목표치설정,AI기능 추가\n●퀵슬롯으로 빠른 입력 추가\n●앱 사용시 장애신고/문의: 010-4104-2226";
+const ADMIN_NOTICE = "통계부분 수정됨.\n2026년 1월 20일까지 연말정산 자료 회사에 제출하셔야 됩니다.\n앱 사용시 장애신고/문의: 010-4104-2226";
 
 /* ═══════════════════════════════════════════════
    토스트 알림
@@ -2890,7 +3229,8 @@ function showMicPermGuide() {
 ═══════════════════════════════════════════════ */
 
 function updateCalWidgets() {
-  if(typeof currentTab !== 'undefined' && currentTab !== 'calendar') return;
+  // 달력 탭이 아닐 때도 게이지 데이터는 갱신 (탭 전환 시 즉시 반영)
+  if(typeof currentTab !== 'undefined' && currentTab !== 'calendar' && currentTab !== undefined) return;
   updateGoalGauge();
   renderSparkline();
   updateQuickSlots();
@@ -2925,7 +3265,7 @@ function updateGoalGauge() {
 
 function saveGoalSalary() {
   const el = document.getElementById('goal-salary-input');
-  const v = (typeof N === 'function') ? N(el?.value) : Number(el?.value||0);
+  var elVal = el ? el.value : undefined; var v = (typeof N === 'function') ? N(elVal) : Number(elVal||0);
   DATA.settings.goalSalary = v;
   if(typeof save === 'function') save();
   updateGoalGauge();
@@ -3070,7 +3410,7 @@ let DATA = {
     basePays:{}, prevYearBasePays:{}, regularPayChecks:{}, prevYearRegularPayChecks:{},
     additionalItemsByPeriod:{}, prevYearAdditionalItemsByPeriod:{},
     customHolidays:HOLIDAYS_BASE, isPanelCollapsed:false, classChangeHistory:[],
-    isLightMode:false, isMuted:false, goalSalary:0, vuiEnabled:true, vuiSpeechPref:true, widgetsHidden:false,
+    isLightMode:false, isMuted:false, goalSalary:0, vuiEnabled:true, vuiSpeechPref:true, widgetsHidden:false, tickerHidden:false, ttsEnabled:true, lowPerfMode:false,
     overtimeList:[
       {name:'G1조출',time:1.0},{name:'G2조출',time:1.0},{name:'G2지원',time:0.5},
       {name:'G3조출',time:1.0},{name:'G5조출',time:1.0},{name:'G5지원',time:0.5},
@@ -3160,6 +3500,116 @@ const _ro=new ResizeObserver(()=>{
   // 패널 크기 변경 후 달력 위치도 보정
   if(currentTab==='calendar') setTimeout(()=>{ applyLayout(); snapCalendarToActive(); }, 450);
 });
+
+/* ═══════════════════════════════════════════════
+   TTS – 음성 출력 엔진
+═══════════════════════════════════════════════ */
+const TTS = (function(){
+  var synth = window.speechSynthesis || null;
+  var enabled = false;
+  var voices = [];
+  var preferVoice = null;
+  var _pendingTimer = null;   // cancel 후 딜레이 speak 용
+
+  /* ── 한국어 음성 선택 ── */
+  function loadVoices() {
+    if(!synth) return;
+    var vList = synth.getVoices();
+    if(!vList || vList.length === 0) return; // 아직 로딩 중이면 건너뜀
+    voices = vList;
+    // 로컬 ko-KR → 네트워크 ko-KR → ko 계열 순 우선
+    preferVoice =
+      voices.find(function(v){ return v.lang==='ko-KR' && v.localService; }) ||
+      voices.find(function(v){ return v.lang==='ko-KR'; }) ||
+      voices.find(function(v){ return v.lang.startsWith('ko'); }) ||
+      null;
+  }
+
+  if(synth) {
+    // 초기 시도 – 동기 로딩되는 브라우저 대응
+    loadVoices();
+    // 비동기 로딩 – Android Chrome, 삼성 브라우저 대응
+    if(typeof synth.onvoiceschanged !== 'undefined') {
+      synth.onvoiceschanged = loadVoices;
+    }
+    // onvoiceschanged 미지원 구형 브라우저(Android 4~6): 폴링 폴백
+    if(voices.length === 0) {
+      var _vpoll = setInterval(function(){
+        loadVoices();
+        if(voices.length > 0) clearInterval(_vpoll);
+      }, 250);
+      setTimeout(function(){ clearInterval(_vpoll); }, 4000);
+    }
+  }
+
+  /* ── iOS 15+ speechSynthesis 멈춤 방지 워치독 ── */
+  var _watchdog = null;
+  function startWatchdog(u) {
+    clearInterval(_watchdog);
+    _watchdog = setInterval(function(){
+      if(!synth) { clearInterval(_watchdog); return; }
+      if(synth.speaking && !synth.paused) {
+        synth.pause();
+        synth.resume();
+      } else {
+        clearInterval(_watchdog);
+      }
+    }, 10000);
+    if(u) u.onend = function(){ clearInterval(_watchdog); };
+  }
+
+  /* ── 실제 발화 실행 (내부) ── */
+  function _doSpeak(text) {
+    if(!synth) return;
+    // voices가 아직 비어 있으면 짧게 기다렸다 재시도
+    if(voices.length === 0) {
+      loadVoices();
+      if(voices.length === 0) {
+        setTimeout(function(){ _doSpeak(text); }, 300);
+        return;
+      }
+    }
+    var u = new SpeechSynthesisUtterance(text);
+    u.lang   = 'ko-KR';
+    u.rate   = 1.05;
+    u.pitch  = 1.0;
+    u.volume = 1.0;  // 0.9 → 1.0 으로 올려 구형폰 출력 보장
+    if(preferVoice) u.voice = preferVoice;
+    startWatchdog(u);
+    synth.speak(u);
+  }
+
+  /* ── 공개 speak ── */
+  function speak(text, priority) {
+    if(!enabled || !synth) return;
+    clearTimeout(_pendingTimer);
+
+    if(synth.speaking || synth.pending) {
+      if(!priority) return;           // 낮은 우선순위 → 무시
+      synth.cancel();
+      // cancel() 직후 speaking 상태가 즉시 false 안 되는 브라우저 대응
+      // → 한 프레임(~50ms) 뒤에 실제 speak 실행
+      _pendingTimer = setTimeout(function(){ _doSpeak(text); }, 80);
+    } else {
+      _doSpeak(text);
+    }
+  }
+
+  function cancel() {
+    clearTimeout(_pendingTimer);
+    clearInterval(_watchdog);
+    if(synth && (synth.speaking || synth.pending)) synth.cancel();
+  }
+
+  function setEnabled(val) {
+    enabled = val;
+    if(!val) cancel();
+  }
+
+  function isSupported() { return !!synth; }
+
+  return { speak, cancel, setEnabled, isSupported };
+})();
 
 /* ═══════════════════════════════════════════════
    SOUND
@@ -3312,13 +3762,16 @@ const load = () => {
     d.settings.overtimeList = DATA.settings.overtimeList;
   }
   const hMap=new Map(HOLIDAYS_BASE.map(h=>[h.date,h]));
-  (d.settings?.customHolidays||[]).forEach(h=>hMap.set(h.date,h));
+  ((d.settings&&d.settings.customHolidays)||[]).forEach(function(h){hMap.set(h.date,h);});
   d.settings.customHolidays=Array.from(hMap.values());
   if(d.settings.isMuted===undefined) d.settings.isMuted=false;
   if(d.settings.goalSalary===undefined) d.settings.goalSalary=0;
   if(d.settings.vuiEnabled===undefined) d.settings.vuiEnabled=true;
   if(d.settings.vuiSpeechPref===undefined) d.settings.vuiSpeechPref=true;
   if(d.settings.widgetsHidden===undefined) d.settings.widgetsHidden=false;
+  if(d.settings.tickerHidden===undefined) d.settings.tickerHidden=false;
+  if(d.settings.ttsEnabled===undefined) d.settings.ttsEnabled=true;
+  if(d.settings.lowPerfMode===undefined) d.settings.lowPerfMode=false;
   DATA={...DATA,...d};
   applyTheme(DATA.settings.isLightMode);
   $('setting-account').value=DATA.account;
@@ -3546,7 +3999,7 @@ const switchJanTab = tab => {janTab=tab;loadPanelUI();playSound('click');};
 ═══════════════════════════════════════════════ */
 const saveBasePay = () => {
   const key=getActiveKey(); if(!key) return;
-  const v=$('base-pay')?.value;
+  var bpEl=$('base-pay'); var v=bpEl?bpEl.value:undefined;
   if(key.endsWith('-12')&&janTab==='prev') DATA.settings.prevYearBasePays[key]=v;
   else DATA.settings.basePays[key]=v;
   save(); updatePanel();
@@ -3686,7 +4139,7 @@ const updateCell = (ds,cell) => {
   if(holi&&!status){const hn=getHolidayName(date);if(hn) status=hn;}
   let ot=0;
   if(rec&&rec.type!=='미선택'&&rec.type!=='휴무'&&rec.type!=='휴가'&&rec.type!=='반차') ot+=OT_MAP[rec.type]||0;
-  if(rec?.overtimes) ot+=rec.overtimes.reduce((s,i)=>s+(+i.time||0),0);
+  if(rec&&rec.overtimes) ot+=rec.overtimes.reduce(function(s,i){return s+(+i.time||0);},0);
   const isNight=calc.type.includes('야간');
   const nightColor=isNight?'var(--orange)':'var(--cyan)';
   const dayColor=date.getDay()===0||holi?'var(--red)':date.getDay()===6?'var(--cyan)':'var(--txt)';
@@ -3752,7 +4205,7 @@ const openWorkModal = ds => {
 };
 const saveRecord = () => {
   const ds=$('modal-date').value;
-  const type=document.querySelector('.wt-radio:checked')?.value;
+  var wtc=document.querySelector('.wt-radio:checked'); var type=wtc?wtc.value:undefined;
   if(!type) return;
   const ots=[];
   document.querySelectorAll('#modal-ot-list .ot-row').forEach(row=>{
@@ -3908,16 +4361,20 @@ const toggleDetail = id => {
 ═══════════════════════════════════════════════ */
 const saveSettings = () => {DATA.class=$('setting-class').value;save();generateCalendar();};
 const renderHolidays = () => {
-  $('holiday-list').innerHTML='';
+  const hlist=$('holiday-list'); if(!hlist) return;
+  hlist.innerHTML='';
   DATA.settings.customHolidays.filter(h=>!HOLIDAYS_BASE.some(b=>b.date===h.date)).forEach(h=>addHolidayRow(h.date,h.name));
 };
 const addHolidayRow = (d='',n='') => {
-  $('holiday-list').insertAdjacentHTML('beforeend',`<div class="list-item">
-    <input type="date" value="${d}" onchange="saveHolidays()">
-    <input type="text" placeholder="공휴일 이름" value="${n}" oninput="saveHolidays()">
-    <button class="ibtn ibtn-red ibtn-xs" onclick="this.parentNode.remove();saveHolidays();playSound('delete');" title="삭제">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button></div>`);
+  var hl=$('holiday-list'); if(!hl) return;
+  var row=document.createElement('div'); row.className='list-item';
+  var di=document.createElement('input'); di.type='date'; di.value=d; di.onchange=saveHolidays;
+  var ni=document.createElement('input'); ni.type='text'; ni.placeholder='공휴일 이름'; ni.value=n; ni.oninput=saveHolidays;
+  var btn=document.createElement('button'); btn.className='ibtn ibtn-red ibtn-xs'; btn.title='삭제';
+  btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  btn.onclick=function(){ row.remove(); saveHolidays(); playSound('delete'); };
+  row.appendChild(di); row.appendChild(ni); row.appendChild(btn);
+  hl.appendChild(row);
 };
 const saveHolidays = () => {
   const h=[...HOLIDAYS_BASE]; const added=new Set(HOLIDAYS_BASE.map(d=>d.date));
@@ -3929,40 +4386,61 @@ const saveHolidays = () => {
   DATA.settings.customHolidays=h; save(); generateCalendar();
 };
 const renderOtSettings = () => {
-  $('ot-list').innerHTML='';
+  const otlist=$('ot-list'); if(!otlist) return;
+  otlist.innerHTML='';
   DATA.settings.overtimeList.forEach(it=>addOtRow(it.name,it.time));
 };
 const addOtRow = (n='',t=.5) => {
-  const c=$('ot-list');
-  let opts=''; for(let i=0;i<=10;i+=.5) opts+=`<option value="${i}" ${i===t?'selected':''}>${i.toFixed(1)}h</option>`;
-  c.insertAdjacentHTML('beforeend',`<div class="list-item">
-    <input type="text" placeholder="잔업 이름" value="${n}" oninput="saveOtSettings()">
-    <select onchange="saveOtSettings()">${opts}</select>
-    <button class="ibtn ibtn-red ibtn-xs" onclick="this.parentNode.remove();saveOtSettings();playSound('delete');" title="삭제">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button></div>`);
+  const ot=$('ot-list'); if(!ot) return;
+  const row=document.createElement('div'); row.className='list-item';
+  // 이름 입력
+  const inp=document.createElement('input');
+  inp.type='text'; inp.placeholder='잔업 이름'; inp.value=n||''; inp.oninput=saveOtSettings;
+  // 시간 숫자 입력 (select 대신 → 어떤 값도 깨지지 않음)
+  const tim=document.createElement('input');
+  tim.type='number'; tim.min='0.5'; tim.max='24'; tim.step='0.5';
+  tim.value=(+t||0.5); tim.oninput=saveOtSettings;
+  tim.style.cssText='flex:0 0 64px;width:64px;text-align:center;';
+  // 단위 라벨
+  const lbl=document.createElement('span');
+  lbl.textContent='h'; lbl.style.cssText='flex:0 0 auto;color:var(--txt2);font-size:.82em;';
+  // 삭제 버튼
+  const btn=document.createElement('button');
+  btn.className='ibtn ibtn-red ibtn-xs'; btn.title='삭제';
+  btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  btn.onclick=function(){ row.remove(); saveOtSettings(); playSound('delete'); };
+  row.appendChild(inp); row.appendChild(tim); row.appendChild(lbl); row.appendChild(btn);
+  ot.appendChild(row);
 };
 const saveOtSettings = () => {
   const list=[];
   document.querySelectorAll('#ot-list .list-item').forEach(d=>{
-    const name=d.querySelector('input').value;
-    const time=N(d.querySelector('select').value);
-    if(name) list.push({name,time});
+    const nameEl = d.querySelector('input[type="text"],input:not([type]):not([type="number"]):not([type="date"])');
+    const timeEl = d.querySelector('input[type="number"]');
+    const name = nameEl ? nameEl.value.trim() : '';
+    const time = timeEl ? (parseFloat(timeEl.value)||0.5) : 0.5;
+    if(name) list.push({name, time});
   });
   DATA.settings.overtimeList=list; save();
 };
 const renderClassHistory = () => {
-  $('class-change-list').innerHTML='';
+  const cclist=$('class-change-list'); if(!cclist) return;
+  cclist.innerHTML='';
   DATA.settings.classChangeHistory.forEach(r=>addClassChangeRow(r.changeDate,r.newClass));
 };
-const addClassChangeRow = (d='',c=DATA.class) => {
-  const opts=['A','B','C','D'].map(v=>`<option value="${v}" ${v===c?'selected':''}>${v}반</option>`).join('');
-  $('class-change-list').insertAdjacentHTML('beforeend',`<div class="list-item">
-    <input type="date" value="${d}" onchange="saveClassHistory()">
-    <select onchange="saveClassHistory()">${opts}</select>
-    <button class="ibtn ibtn-red ibtn-xs" onclick="this.parentNode.remove();saveClassHistory();playSound('delete');" title="삭제">
-      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-    </button></div>`);
+const addClassChangeRow = (d='',cls=DATA.class) => {
+  var ccl=$('class-change-list'); if(!ccl) return;
+  var row=document.createElement('div'); row.className='list-item';
+  var di=document.createElement('input'); di.type='date'; di.value=d; di.onchange=saveClassHistory;
+  var sel=document.createElement('select'); sel.className='cls-sel'; sel.onchange=saveClassHistory;
+  ['A','B','C','D'].forEach(function(v){
+    var o=document.createElement('option'); o.value=v; o.textContent=v+'반'; if(v===cls) o.selected=true; sel.appendChild(o);
+  });
+  var btn=document.createElement('button'); btn.className='ibtn ibtn-red ibtn-xs'; btn.title='삭제';
+  btn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+  btn.onclick=function(){ row.remove(); saveClassHistory(); playSound('delete'); };
+  row.appendChild(di); row.appendChild(sel); row.appendChild(btn);
+  ccl.appendChild(row);
 };
 const saveClassHistory = () => {
   const h=[];
@@ -4042,7 +4520,7 @@ const closeFab = () => {
 const fabNav = tab => {
   closeFab(); switchTab(tab); playSound('open');
   document.querySelectorAll('.fab-item').forEach(el=>el.classList.remove('active'));
-  $('fi-'+tab)?.classList.add('active');
+  var fiEl=$('fi-'+tab); if(fiEl) fiEl.classList.add('active');
   $('fab-label').textContent=FAB_LABELS[tab]||tab;
 };
 // ═══════════════════════════════════════════════════
@@ -4051,7 +4529,7 @@ const fabNav = tab => {
 // ═══════════════════════════════════════════════════
 const snapCalendarToActive = () => {
   const view = $('calendar-view');
-  const active = document.querySelector('.calendar-month.active');
+  const active = document.querySelector('.calendar-month.active') || document.querySelector('.calendar-month');
   if(!view || !active) return;
   // 컨테이너 내부에서 active 월 박스의 상대적 offsetTop 계산
   const containerTop = view.getBoundingClientRect().top;
@@ -4075,7 +4553,7 @@ const restoreCalendarPosition = () => {
 const switchTab = tab => {
   currentTab=tab;
   document.querySelectorAll('.tab-pane').forEach(p=>p.classList.remove('active'));
-  $('tab-'+tab)?.classList.add('active');
+  var tabEl=$('tab-'+tab); if(tabEl) tabEl.classList.add('active');
   const panel=$('salary-panel');
   if(panel) panel.style.display=(tab==='calendar')?'':'none';
   if(tab==='stats'){populateStatsYear();renderStats();syncLayout();}
@@ -4083,6 +4561,10 @@ const switchTab = tab => {
     loadPanelUI();
     restoreCalendarPosition();
     updateCalWidgets();
+  } else if(tab==='settings'){
+    syncLayout();
+    // 설정 탭 진입 시 성능 등급 배지 최신화
+    setTimeout(detectAndShowPerfGrade, 100);
   } else {
     syncLayout();
   }
@@ -4129,13 +4611,13 @@ const VUI = (() => {
         ? '"12일 야간" · "다음주 월요일에서 금요일 주간" 처럼 날짜 지정도 돼요'
         : '근무 형태를 선택해 빠르게 등록할 수 있습니다' },
     { icon:'📊', getText:() => speechAvailable
-        ? '"이번달 야간" · "이번달 잔업" · "통계 보여줘"'
+        ? '"8월 실수령액" · "2025년 8월 야간" · "이번달 잔업"'
         : '등록된 데이터로 급여를 자동 계산합니다' },
     { icon:'💴', getText:() => speechAvailable
-        ? '"기본급 300만원" · "목표 250만원" 으로 즉시 설정'
+        ? '"기본급 300만원" · "목표 250만원" · "8월 달력으로 이동"'
         : '설정 탭에서 기본급을 입력해 주세요' },
     { icon:'📋', getText:() => speechAvailable
-        ? '"이번달 근무 현황" · "이번달 얼마" 로 확인'
+        ? '"이번달 근무 현황" · "라이트 모드" · "효과음 꺼"'
         : '통계 탭에서 월별 급여 현황을 확인하세요' },
   ];
   let tickerIdx = 0;
@@ -4154,6 +4636,52 @@ const VUI = (() => {
   const startTicker = () => {
     rotateTicker();
     setInterval(rotateTicker, 5000);
+  };
+
+  /* ── 오버레이 컨트롤 ── */
+  const _ov    = () => document.getElementById('vui-overlay');
+  const _ovCtr = () => document.getElementById('vui-arc-center');
+  const _ovBrs = () => document.getElementById('vui-ov-bars');
+  const _ovSvg = () => document.getElementById('vui-arc-svg');
+  const _ovPr  = () => document.getElementById('vui-pulse-ring');
+  const _ovPr2 = () => document.getElementById('vui-pulse-ring2');
+  const _ovLbl = () => document.getElementById('vui-transcript-label');
+  const _ovTxt = () => document.getElementById('vui-transcript-text');
+
+  const overlayOpen = () => {
+    const o=_ov(); if(!o) return;
+    o.classList.add('vui-ov-open');
+    document.body.classList.add('no-scroll');
+    _ovCtr()&&_ovCtr().classList.add('arc-listening');
+    _ovBrs()&&_ovBrs().classList.remove('bars-idle');
+    _ovSvg()&&_ovSvg().classList.remove('arc-idle');
+    _ovPr() &&_ovPr().classList.remove('arc-idle');
+    _ovPr2()&&_ovPr2().classList.remove('arc-idle');
+    const lb=_ovLbl(); if(lb) lb.textContent='🎙 듣고 있습니다';
+    const tx=_ovTxt(); if(tx){tx.textContent='말씀해 주세요...';tx.className='';}
+  };
+  const overlayClose = (delay) => {
+    delay = delay || 0;
+    const o=_ov(); if(!o||!o.classList.contains('vui-ov-open')) return;
+    // 취소 버튼으로 닫을 때(delay=0) recognition 중단
+    if(delay===0 && isListening && recognition){
+      try{ recognition.stop(); }catch(e2){}
+    }
+    setTimeout(function(){
+      o.classList.remove('vui-ov-open');
+      if(!document.querySelector('.modal.open')) document.body.classList.remove('no-scroll');
+      _ovCtr()&&_ovCtr().classList.remove('arc-listening');
+      _ovBrs()&&_ovBrs().classList.add('bars-idle');
+      _ovSvg()&&_ovSvg().classList.add('arc-idle');
+      _ovPr() &&_ovPr().classList.add('arc-idle');
+      _ovPr2()&&_ovPr2().classList.add('arc-idle');
+    }, delay);
+  };
+  const overlayError = (msg) => {
+    const lb=_ovLbl(); if(lb) lb.textContent='오류';
+    const tx=_ovTxt(); if(tx){tx.textContent=msg;tx.className='';}
+    _ovCtr()&&_ovCtr().classList.remove('arc-listening');
+    setTimeout(function(){ overlayClose(0); }, 2500);
   };
 
   /* ═══════════════════════════════════════════════
@@ -4325,14 +4853,64 @@ const VUI = (() => {
        명령 분기
     ══════════════════════════════ */
 
+    /* ── 기간 키 파싱 헬퍼 ── */
+    const parseQueryKey = function() {
+      var yr = today.getFullYear();
+      var ymM = raw.match(/(\d{4})년\s*(\d{1,2})월/);
+      if(ymM) return getPeriodKey(new Date(+ymM[1], +ymM[2]-1, 25));
+      var ymS = raw.match(/(\d{2})년\s*(\d{1,2})월/);
+      if(ymS) return getPeriodKey(new Date(2000 + +ymS[1], +ymS[2]-1, 25));
+      var yOnly = raw.match(/(\d{4})년/);
+      if(yOnly && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(+yOnly[1], today.getMonth(), 25));
+      if(cmd.match(/올해/)) return getPeriodKey(new Date(yr, today.getMonth(), 25));
+      if(cmd.match(/작년/)) return getPeriodKey(new Date(yr-1, today.getMonth(), 25));
+      if(cmd.match(/내년/)) return getPeriodKey(new Date(yr+1, today.getMonth(), 25));
+      var mM = raw.match(/(\d{1,2})월/);
+      if(mM && !cmd.match(/이번달|오늘/)) return getPeriodKey(new Date(yr, +mM[1]-1, 25));
+      if(cmd.match(/이번달|이번 달/)) return getPeriodKey(today);
+      if(cmd.match(/다음달|다음 달/)){var d1=new Date(today);d1.setMonth(d1.getMonth()+1);return getPeriodKey(d1);}
+      if(cmd.match(/지난달|저번달/)){var d2=new Date(today);d2.setMonth(d2.getMonth()-1);return getPeriodKey(d2);}
+      return null;
+    };
+    const keyLabel = function(key) {
+      if(!key) return '';
+      var parts=key.split('-').map(Number);
+      return parts[0]+'년 '+parts[1]+'월';
+    };
+
     // ① 화면 전환
-    if(cmd.match(/통계(보여줘|열어줘|이동|탭)?$/) || cmd.match(/통계(탭|화면|뷰)/)) {
+    if(cmd.match(/통계보여줘|통계열어줘|통계이동|통계탭|통계화면/)) {
       fabNav('stats'); setTicker('📊','통계 화면으로 이동했어요'); playSound('open'); return done();
     }
-    if(cmd.match(/설정(보여줘|열어줘|이동|탭)?$/) || cmd.match(/설정(탭|화면|메뉴)/)) {
+    if(cmd.match(/설정보여줘|설정열어줘|설정이동|설정탭|설정화면/)) {
       fabNav('settings'); setTicker('⚙️','설정 화면으로 이동했어요'); playSound('open'); return done();
     }
-    if(cmd.match(/달력(보여줘|열어줘|이동|탭)?$/) || cmd.match(/달력(탭|화면)/)) {
+    // 달력 + 특정 월 이동
+    if((cmd.match(/달력|이동/) && cmd.match(/월|년|이번달|오늘/))) {
+      fabNav('calendar');
+      var navY=today.getFullYear(), navM=today.getMonth();
+      var ymN=raw.match(/(\d{4})년\s*(\d{1,2})월/);
+      var ymS3=raw.match(/(\d{2})년\s*(\d{1,2})월/);
+      var mN=raw.match(/(\d{1,2})월/);
+      var yN3=raw.match(/(\d{4})년/);
+      if(ymN){navY=+ymN[1];navM=+ymN[2]-1;}
+      else if(ymS3){navY=2000+ +ymS3[1];navM=+ymS3[2]-1;}
+      else if(yN3 && !mN){navY=+yN3[1];}
+      else if(mN && !cmd.match(/이번달/)){ navM=+mN[1]-1; }
+      var navId='month-'+navY+'-'+navM;
+      setTimeout(function(){
+        scrollToMonth(navId,false);
+        setTimeout(function(){
+          var el=document.getElementById(navId);
+          if(el){
+            document.querySelectorAll('.calendar-month').forEach(function(m){m.classList.remove('active');});
+            el.classList.add('active'); loadPanelUI();
+          }
+        },350);
+      },200);
+      setTicker('📅', navY+'년 '+(navM+1)+'월 달력으로 이동했어요'); playSound('open'); return done();
+    }
+    if(cmd.match(/달력보여줘|달력열어줘|달력탭|달력화면/)) {
       fabNav('calendar'); setTicker('📅','달력 화면으로 이동했어요'); playSound('open'); return done();
     }
 
@@ -4344,6 +4922,7 @@ const VUI = (() => {
         save(); updateCalWidgets();
         const gi = document.getElementById('goal-salary-input');
         if(gi) gi.value = amount;
+        TTS.speak('목표 급여 '+Math.floor(amount/10000)+'만원으로 설정', true);
         setTicker('🎯',`목표 급여를 ${fmtWon(amount)}으로 설정했어요`);
         playSound('save'); return done();
       }
@@ -4366,36 +4945,36 @@ const VUI = (() => {
       setTicker('❓','"기본급 300만원" 처럼 말씀해 주세요'); return done();
     }
 
-    // ④ 월간 통계 조회
-    if(cmd.includes('이번달')||cmd.includes('이번 달')||cmd.includes('월급')||cmd.includes('얼마')) {
-      const key = getActiveKey();
-      if(!key) { setTicker('❓','달력 화면에서 사용해 주세요'); return done(); }
-      const s = calcStats(key);
+    // ④ 월간 통계 조회 (특정연월/이번달/지난달)
+    if(cmd.match(/이번달|이번 달|월급|얼마|실수령/) || (raw.match(/\d{1,4}월/) && cmd.match(/야간|특근|잔업|실수령|월급|얼마/))) {
+      var qkey = parseQueryKey();
+      if(!qkey && cmd.match(/월급|얼마|실수령/)) qkey = getPeriodKey(today);
+      if(!qkey){ setTicker('❓','"이번달 야간", "8월 실수령액", "2025년 8월 잔업" 처럼 말씀해 주세요'); return done(); }
+      var qs=calcStats(qkey), qlbl=keyLabel(qkey);
       if(cmd.includes('야간')) {
-        setTicker('🌙',`이번 달 야간: ${s.nightDays}일 (${fmtWon(s.nightAmount)})`);
+        var ttsS1 = qlbl+' 야간 '+qs.nightDays+'일, '+Math.floor(qs.nightAmount/10000)+'만원';
+        setTicker('🌙', qlbl+' 야간: '+qs.nightDays+'일 ('+fmtWon(qs.nightAmount)+')');
+        TTS.speak(ttsS1, true);
       } else if(cmd.includes('특근')) {
-        setTicker('💪',`이번 달 특근: ${s.specialDays}일 (${fmtWon(s.specialAmount)})`);
+        setTicker('💪', qlbl+' 특근: '+qs.specialDays+'일 ('+fmtWon(qs.specialAmount)+')');
       } else if(cmd.includes('잔업')||cmd.includes('연장')) {
-        const tot=(s.weekdayOT+s.specialOT).toFixed(1);
-        setTicker('⏱️',`이번 달 잔업: ${tot}h (${fmtWon(s.totalOvertimePay)})`);
+        var ttsS3 = qlbl+' 잔업 '+(qs.weekdayOT+qs.specialOT).toFixed(1)+'시간, '+Math.floor(qs.totalOvertimePay/10000)+'만원';
+        setTicker('⏱️', qlbl+' 잔업: '+(qs.weekdayOT+qs.specialOT).toFixed(1)+'h ('+fmtWon(qs.totalOvertimePay)+')');
+        TTS.speak(ttsS3, true);
       } else {
-        const net = Math.floor(s.totalSalary).toLocaleString();
-        setTicker('💰',`이번 달 예상 실수령: ${net}원`);
+        var ttsS4 = qlbl+' 예상 실수령액 '+Math.floor(qs.totalSalary/10000)+'만원';
+        setTicker('💰', qlbl+' 예상 실수령: '+Math.floor(qs.totalSalary).toLocaleString()+'원');
+        TTS.speak(ttsS4, true);
       }
       playSound('click'); return done();
     }
 
-    // ⑤ 이번 달 근무 현황 확인
+    // ⑤ 근무 현황 확인
     if(cmd.includes('현황')||cmd.includes('근무현황')||cmd.includes('근무확인')) {
-      const key = getActiveKey();
-      if(!key) { setTicker('❓','달력 화면에서 사용해 주세요'); return done(); }
-      const s = calcStats(key);
-      const total = Object.values(DATA.workRecords).filter(r => {
-        const d = new Date(r.date);
-        const rk = getPeriodKey(d);
-        return rk === key;
-      }).length;
-      setTicker('📋',`야간 ${s.nightDays}일 / 특근 ${s.specialDays}일 / 잔업 ${(s.weekdayOT+s.specialOT).toFixed(1)}h / 등록 ${total}일`);
+      var hkey = parseQueryKey() || getPeriodKey(today);
+      var hs=calcStats(hkey), hlbl=keyLabel(hkey);
+      var htotal=Object.values(DATA.workRecords).filter(function(r){ return getPeriodKey(new Date(r.date))===hkey; }).length;
+      setTicker('📋', hlbl+' — 야간 '+hs.nightDays+'일 / 특근 '+hs.specialDays+'일 / 잔업 '+(hs.weekdayOT+hs.specialOT).toFixed(1)+'h / 등록 '+htotal+'일');
       playSound('click'); return done();
     }
 
@@ -4404,6 +4983,7 @@ const VUI = (() => {
       const ds = fmtDate(targetDate);
       const rec = DATA.workRecords[ds];
       if(!rec || rec.type==='미선택') {
+        TTS.speak(dateLabel+'에 먼저 근무 형태를 등록해 주세요', true);
         setTicker('❓',`${dateLabel}에 먼저 근무 형태를 등록해 주세요`); return done();
       }
       const roundedH = Math.round(otHours * 2) / 2; // 0.5h 단위
@@ -4456,6 +5036,7 @@ const VUI = (() => {
       updatePanel();
       if(cnt > 0) {
         const lbl = dates.length > 1 ? `${dateLabel} ${cnt}일` : `${dateLabel}(${targetDate.getDate()}일)`;
+        TTS.speak(lbl+' 기록 삭제', true);
         setTicker('🗑️',`${lbl} 기록 삭제`); playSound('delete');
       } else {
         setTicker('❓',`${dateLabel}에 삭제할 기록이 없습니다`);
@@ -4463,11 +5044,25 @@ const VUI = (() => {
       return done();
     }
 
-    // ⑩ 도움말
-    setTicker('💡','예: "오늘 야간" · "12일 주간특근" · "이번주 월~금 주간" · "오늘 잔업 2시간" · "기본급 300만원" · "목표 250만원" · "이번달 야간" · "통계 보여줘"');
+    // ⑩ 설정 토글
+    if(cmd.match(/라이트|밝게|화이트모드/)) {
+      toggleTheme(true); setTicker('☀️','라이트 모드로 전환했어요'); playSound('toggle'); return done();
+    }
+    if(cmd.match(/다크|어둡게|다크모드/)) {
+      toggleTheme(false); setTicker('🌙','다크 모드로 전환했어요'); playSound('toggle'); return done();
+    }
+    if(cmd.match(/효과음켜|소리켜|음소거해제/)) {
+      toggleMute(true); setTicker('🔊','효과음을 켰어요'); return done();
+    }
+    if(cmd.match(/효과음꺼|소리꺼|음소거/)) {
+      toggleMute(false); setTicker('🔇','효과음을 껐어요'); return done();
+    }
+
+    // ⑪ 도움말
+    setTicker('💡','"오늘 야간" · "다음주 월~금 주간" · "8월 실수령액" · "2025년 8월 달력" · "라이트 모드" · "통계 보여줘"');
     return done();
 
-    function done() { setTimeout(()=>{ if(!isListening) rotateTicker(); }, 4500); }
+    function done() { setTimeout(function(){ if(!isListening) rotateTicker(); }, 4500); }
   };
 
   /* 음성 인식 초기화 */
@@ -4476,26 +5071,35 @@ const VUI = (() => {
     recognition = new SR();
     recognition.lang='ko-KR';
     recognition.interimResults = isIOS ? false : true; // iOS 불안정 방지
-    recognition.maxAlternatives = 1;
+    recognition.maxAlternatives = 3;
     recognition.continuous=false;
 
     recognition.onstart = () => {
       isListening=true;
-      tickerContainer()?.classList.add('vui-active');
-      visualizer()?.classList.remove('vui-hidden');
-      micBtn()?.classList.add('mic-listening');
-      setTicker('🎙️','듣고 있습니다...');
+      var tc2=tickerContainer(); tc2&&tc2.classList.add('vui-active');
+      var vz2=visualizer(); vz2&&vz2.classList.remove('vui-hidden');
+      const mb=micBtn();
+      if(mb){ mb.classList.add('mic-listening'); if(isIOS) mb.classList.add('mic-ios-try'); }
+      setTicker('🎙️', isIOS ? '🍎 말씀해 주세요...' : '듣고 있습니다...');
+      // 마이크 활성 중 TTS 동시 발화 금지 (브라우저가 억제함 → 목소리 안 들리는 원인)
+      // TTS.speak(isIOS ? '말씀해 주세요' : '듣고 있습니다', false);
+      overlayOpen();
     };
     recognition.onresult = (e) => {
       const t=e.results[e.results.length-1][0].transcript;
       const tt=tickerText(); if(tt) tt.textContent=t;
-      if(e.results[0].isFinal) processCommand(t);
+      const ot=document.getElementById('vui-transcript-text');
+      if(ot){ ot.textContent=t; ot.className=e.results[0].isFinal?'':'interim'; }
+      const ol=document.getElementById('vui-transcript-label');
+      if(ol) ol.textContent=e.results[0].isFinal?'인식 완료':'🎙 듣고 있습니다';
+      if(e.results[0].isFinal){ _iosFailCount=0; processCommand(t); overlayClose(800); }
     };
     recognition.onerror = (e) => {
       isListening=false;
-      tickerContainer()?.classList.remove('vui-active');
-      visualizer()?.classList.add('vui-hidden');
-      micBtn()?.classList.remove('mic-listening');
+      overlayClose(0);
+      var tc=tickerContainer(); tc&&tc.classList.remove('vui-active');
+      var vz=visualizer(); vz&&vz.classList.add('vui-hidden');
+      var mc=micBtn(); if(mc){ mc.classList.remove('mic-listening'); mc.classList.remove('mic-ios-try'); }
 
       /* 권한 거부 → 텍스트 폴백으로 영구 전환 */
       if(e.error==='not-allowed'||e.error==='service-not-allowed'){
@@ -4530,14 +5134,16 @@ const VUI = (() => {
     };
     recognition.onend = () => {
       isListening=false;
-      micBtn()?.classList.remove('mic-listening');
-      setTimeout(()=>{
+      const mb=micBtn();
+      if(mb){ mb.classList.remove('mic-listening'); mb.classList.remove('mic-ios-try'); }
+      setTimeout(function(){
         if(!isListening){
-          tickerContainer()?.classList.remove('vui-active');
-          visualizer()?.classList.add('vui-hidden');
+          tickerContainer()&&tickerContainer().classList.remove('vui-active');
+          visualizer()&&visualizer().classList.add('vui-hidden');
           rotateTicker();
+          overlayClose(0);
         }
-      }, 3000);
+      }, 3500);
     };
   };
 
@@ -4567,7 +5173,17 @@ const VUI = (() => {
     if(sel) sel.textContent='근무 형태를 선택해 주세요';
     const btn=el('vui-text-confirm');
     if(btn){ btn.disabled=true; btn.style.opacity='.45'; }
-    el('vui-text-modal')?.classList.add('open');
+    // 팁 버튼: VUI 활성화 시에만 표시
+    var tipBtn = document.getElementById('vui-tip-btn');
+    var tipsPanel = document.getElementById('vui-tips-panel');
+    if(tipBtn){
+      var vuiOn = (typeof DATA !== 'undefined') && DATA.settings.vuiEnabled;
+      tipBtn.style.display = vuiOn ? 'block' : 'none';
+    }
+    if(tipsPanel) tipsPanel.style.display = 'none'; // 열 때마다 팁 닫힘
+    var tipBtnEl = document.getElementById('vui-tip-btn');
+    if(tipBtnEl) tipBtnEl.innerHTML = '💡 명령어 팁 ▾';
+    var vtm=el('vui-text-modal'); if(vtm) vtm.classList.add('open');
     document.body.classList.add('no-scroll');
   };
 
@@ -4680,8 +5296,261 @@ const VUI = (() => {
     if(mr) mr.style.display='none';
   };
 
-  return { init, toggle, _setTicker:setTicker, _processCmd:processCommand, applyEnabled, setSpeechPref, forceFallback };
+  return { init, toggle, _setTicker:setTicker, _processCmd:processCommand, overlayClose, applyEnabled, setSpeechPref, forceFallback };
 })();
+
+/* ── 달력 도움말(티커) 토글 ── */
+const toggleTTS = function(on) {
+  DATA.settings.ttsEnabled = on;
+  save();
+  TTS.setEnabled(on);
+  if(on) TTS.speak('음성 출력이 활성화되었습니다', true);
+};
+
+const toggleTicker = function(on) {
+  DATA.settings.tickerHidden = !on;
+  save();
+  var tc = document.getElementById('utility-ticker-container');
+  if(tc) tc.style.display = on ? '' : 'none';
+};
+
+/* ═══════════════════════════════════════════════
+   성능 최적화 모드 (Low-Perf Mode)
+═══════════════════════════════════════════════ */
+
+/* 실제 body.low-perf 클래스 적용/해제 + 기능 제어 */
+function applyLowPerfMode(on) {
+  var body = document.body;
+  if(on) {
+    body.classList.add('low-perf');
+    // ① 무한 애니메이션 요소들 정지 (JS 레벨)
+    var animEls = document.querySelectorAll(
+      '.splash-ring-outer,.splash-ring-inner,#vui-arc-svg,.arc-active2,#vui-pulse-ring,#vui-pulse-ring2'
+    );
+    animEls.forEach(function(el){ el.style.animationPlayState = 'paused'; });
+    // ② 스플래시가 아직 있으면 즉시 제거
+    var sp = document.getElementById('splash');
+    if(sp) { sp.style.opacity = '0'; setTimeout(function(){ if(sp.parentNode) sp.remove(); }, 200); }
+    // ③ 달력 will-change 제거 (메모리 과점유 방지)
+    document.querySelectorAll('.calendar-month').forEach(function(m){
+      m.style.willChange = 'auto';
+    });
+    // ④ localStorage 캐시 갱신
+    try { localStorage.setItem('lp_v1','1'); } catch(_){}
+  } else {
+    body.classList.remove('low-perf');
+    // 정지된 애니메이션 복원
+    var animEls2 = document.querySelectorAll(
+      '.splash-ring-outer,.splash-ring-inner,#vui-arc-svg,.arc-active2,#vui-pulse-ring,#vui-pulse-ring2'
+    );
+    animEls2.forEach(function(el){ el.style.animationPlayState = ''; });
+    // 달력 will-change 복원
+    document.querySelectorAll('.calendar-month').forEach(function(m){
+      m.style.willChange = '';
+    });
+    try { localStorage.setItem('lp_v1','0'); } catch(_){}
+  }
+  // 설정 UI 토글 동기화
+  var tog = document.getElementById('perf-mode-toggle');
+  if(tog) tog.checked = on;
+  var sub = document.getElementById('perf-mode-sub');
+  if(sub) sub.textContent = on
+    ? '✅ 활성 중 — 블러/애니메이션 OFF, 속도 향상'
+    : '구형 기기에서 앱 반응 속도를 높입니다';
+  // 토스트 알림
+  showPerfToast(on ? '⚡ 성능 최적화 모드 ON' : '✨ 일반 모드 복원');
+}
+
+/* 설정 토글 핸들러 */
+window.toggleLowPerfMode = function(on) {
+  DATA.settings.lowPerfMode = on;
+  save();
+  applyLowPerfMode(on);
+};
+
+/* 토스트 배너 */
+function showPerfToast(msg) {
+  var el = document.getElementById('perf-toast-bar');
+  if(!el) {
+    el = document.createElement('div');
+    el.id = 'perf-toast-bar';
+    document.body.appendChild(el);
+  }
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(function(){ el.classList.remove('show'); }, 2800);
+}
+
+/* 기기 성능 등급 감지 & 설정 UI 업데이트 */
+function detectAndShowPerfGrade() {
+  var badge  = document.getElementById('perf-grade-badge');
+  var icon   = document.getElementById('perf-grade-icon');
+  var label  = document.getElementById('perf-grade-label');
+  var sub    = document.getElementById('perf-grade-sub');
+  if(!badge || !label) return;
+
+  var cores = navigator.hardwareConcurrency || 4;
+  var ram   = navigator.deviceMemory      || 4;
+  var ua    = navigator.userAgent || '';
+  var oldAndroid = /Android [1-7]\./.test(ua);
+  var isAndroid  = /Android/.test(ua);
+
+  var grade, gIcon, gLabel, gSub, gClass;
+  if(oldAndroid || cores <= 2 || ram <= 1) {
+    grade='low';  gIcon='🐢'; gLabel='저사양 기기 감지됨';
+    gSub = '코어 '+cores+'개 / RAM '+ram+'GB — 최적화 모드를 켜세요';
+    gClass='grade-low';
+  } else if(cores <= 4 || ram <= 2) {
+    grade='mid';  gIcon='⚡'; gLabel='중간 사양 기기';
+    gSub = '코어 '+cores+'개 / RAM '+ram+'GB — 필요 시 최적화 모드 사용';
+    gClass='grade-mid';
+  } else {
+    grade='high'; gIcon='🚀'; gLabel='고사양 기기';
+    gSub = '코어 '+cores+'개 / RAM '+ram+'GB — 최적화 모드 불필요';
+    gClass='grade-high';
+  }
+  icon.textContent  = gIcon;
+  label.textContent = gLabel;
+  sub.textContent   = gSub;
+  badge.className   = '';
+  badge.classList.add(gClass);
+  // 저사양 감지 시 자동으로 추천 안내
+  if(grade === 'low' && !DATA.settings.lowPerfMode) {
+    var perfSub = document.getElementById('perf-mode-sub');
+    if(perfSub) perfSub.textContent = '⚠️ 저사양 기기 — 최적화 모드를 켜는 것을 권장합니다';
+  }
+}
+
+/* 성능 최적화 모드 상세 안내 바텀시트 */
+window.openPerfInfoSheet = function() {
+  var body  = document.getElementById('detail-sheet-body');
+  var title = document.getElementById('detail-sheet-title');
+  if(!body || !title) return;
+  title.textContent = '성능 최적화 모드 안내';
+
+  var on  = DATA.settings.lowPerfMode;
+  var offList = [
+    { icon:'🌫️', label:'유리 블러 효과 (backdrop-filter)',     detail:'버튼·모달·FAB 메뉴의 반투명 블러 제거 → GPU 부하 ↓↓' },
+    { icon:'✨', label:'무한 반복 애니메이션',                   detail:'회전 링·헤더 shimmer·마이크 펄스 등 불필요한 루프 정지' },
+    { icon:'🌈', label:'배경 오로라·노이즈 텍스처',              detail:'body 배경 그라디언트/노이즈 이미지 제거 → 렌더링 절약' },
+    { icon:'💡', label:'달력 셀 box-shadow',                    detail:'365개 셀의 그림자 제거 → 스크롤 FPS 향상' },
+    { icon:'🔄', label:'버튼 transition 간소화',                 detail:'bounce/spring 효과 → 단순 opacity 전환으로 교체' },
+    { icon:'📊', label:'스파크라인 차트 애니메이션',              detail:'달력 하단 추이 차트 갱신 애니메이션 생략' },
+  ];
+  var keepList = [
+    { icon:'📅', label:'달력 근무 기록 / 저장',      detail:'모든 입력·저장 기능 정상 작동' },
+    { icon:'💰', label:'급여 계산 · 통계',            detail:'계산 로직에 영향 없음' },
+    { icon:'🎙️', label:'VUI 음성/텍스트 명령',        detail:'음성 인식·TTS 정상 작동' },
+    { icon:'🔔', label:'효과음',                      detail:'AudioContext 사운드 유지' },
+    { icon:'🌙', label:'야간/특근/잔업 등록',          detail:'근무 형태 기록 정상 작동' },
+    { icon:'🌓', label:'라이트/다크 모드',             detail:'테마 전환 정상 작동' },
+  ];
+
+  var html = '';
+  // 현재 상태 표시
+  html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;padding:12px 14px;border-radius:12px;background:'+(on?'rgba(251,146,60,.12)':'rgba(134,239,172,.10)')+';border:1px solid '+(on?'rgba(251,146,60,.35)':'rgba(134,239,172,.3)')+'">';
+  html += '<span style="font-size:1.5em;">'+(on?'⚡':'✨')+'</span>';
+  html += '<div><div style="font-weight:800;font-size:.9em;color:var(--txt)">'+(on?'성능 최적화 모드 활성 중':'일반 모드 활성 중')+'</div>';
+  html += '<div style="font-size:.76em;color:var(--txt2);margin-top:2px;">'+(on?'아래 기능들이 OFF 상태입니다':'설정 탭에서 최적화 모드를 켤 수 있습니다')+'</div></div></div>';
+
+  // OFF 되는 기능 목록
+  html += '<div style="font-size:.78em;font-weight:800;letter-spacing:.06em;color:var(--txt3);margin-bottom:8px;">🚫 최적화 모드 ON 시 꺼지는 기능</div>';
+  offList.forEach(function(item){
+    html += '<div style="display:flex;gap:10px;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--bd);">';
+    html += '<span style="font-size:1.1em;flex-shrink:0;width:22px;text-align:center;">'+item.icon+'</span>';
+    html += '<div><div style="font-size:.85em;font-weight:700;color:var(--txt)">'+item.label+'</div>';
+    html += '<div style="font-size:.76em;color:var(--txt3);margin-top:2px;line-height:1.4;">'+item.detail+'</div></div></div>';
+  });
+
+  // 유지되는 기능 목록
+  html += '<div style="font-size:.78em;font-weight:800;letter-spacing:.06em;color:var(--txt3);margin:14px 0 8px;">✅ 최적화 모드에서도 정상 작동</div>';
+  keepList.forEach(function(item){
+    html += '<div style="display:flex;gap:10px;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--bd);">';
+    html += '<span style="font-size:1.1em;flex-shrink:0;width:22px;text-align:center;">'+item.icon+'</span>';
+    html += '<div><div style="font-size:.85em;font-weight:700;color:var(--txt)">'+item.label+'</div>';
+    html += '<div style="font-size:.76em;color:var(--txt3);margin-top:2px;">'+item.detail+'</div></div></div>';
+  });
+
+  // 빠른 토글 버튼
+  html += '<button onclick="toggleLowPerfMode('+(on?'false':'true')+');document.getElementById(\'detail-sheet-modal\').classList.remove(\'open\');document.body.classList.remove(\'no-scroll\');" ';
+  html += 'style="width:100%;margin-top:18px;min-height:52px;border-radius:14px;border:1.5px solid '+(on?'rgba(134,239,172,.4)':'rgba(251,146,60,.4)')+';';
+  html += 'background:'+(on?'rgba(134,239,172,.12)':'rgba(251,146,60,.12)')+';color:'+(on?'var(--green)':'#fb923c')+';';
+  html += 'font-size:.9em;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">';
+  html += (on ? '✨ 일반 모드로 전환' : '⚡ 성능 최적화 모드 켜기');
+  html += '</button>';
+
+  body.innerHTML = html;
+  var modal = document.getElementById('detail-sheet-modal');
+  if(modal){ modal.classList.add('open'); document.body.classList.add('no-scroll'); playSound('open'); }
+};
+
+/* ── 상세 설정 바텀시트 ── */
+window.openDetailSheet = function(type) {
+  var body  = document.getElementById('detail-sheet-body');
+  var title = document.getElementById('detail-sheet-title');
+  if(!body || !title) return;
+  body.innerHTML = '';
+
+  function makeAddBtn(label, fn) {
+    var b = document.createElement('button');
+    b.className = 'tbtn tbtn-ghost';
+    b.style.cssText = 'width:100%;margin-top:12px;min-height:44px;';
+    b.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg> ' + label;
+    b.onclick = fn; return b;
+  }
+
+  if(type === 'class-history') {
+    title.textContent = '반 변경 기록';
+    var s1 = document.createElement('div'); s1.className='set-row-sub'; s1.style.marginBottom='10px';
+    s1.textContent = '변경일 이후 해당 반 로테이션 자동 적용';
+    var l1 = document.createElement('div'); l1.id='class-change-list'; l1.className='list-wrap';
+    body.appendChild(s1); body.appendChild(l1);
+    renderClassHistory();
+    body.appendChild(makeAddBtn('반 변경 기록 추가', function(){ addClassChangeRow(); playSound('click'); }));
+
+  } else if(type === 'overtime') {
+    title.textContent = '잔업 종류 관리';
+    var s2 = document.createElement('div'); s2.className='set-row-sub'; s2.style.marginBottom='10px';
+    s2.textContent = '잔업 이름과 기본 시간을 설정합니다.';
+    var l2 = document.createElement('div'); l2.id='ot-list'; l2.className='list-wrap';
+    body.appendChild(s2); body.appendChild(l2);
+    renderOtSettings(); // ← list가 DOM에 있을 때 바로 렌더
+    body.appendChild(makeAddBtn('잔업 종류 추가', function(){ addOtRow(); playSound('click'); }));
+
+  } else if(type === 'holidays') {
+    title.textContent = '사용자 지정 공휴일';
+    var l3 = document.createElement('div'); l3.id='holiday-list'; l3.className='list-wrap';
+    body.appendChild(l3);
+    renderHolidays();
+    body.appendChild(makeAddBtn('공휴일 추가', function(){ addHolidayRow(); playSound('click'); }));
+
+  } else if(type === 'data') {
+    title.textContent = '데이터 관리';
+    var row = document.createElement('div'); row.style.cssText='display:flex;gap:8px;margin-bottom:12px;';
+    var b1 = document.createElement('button'); b1.className='tbtn tbtn-cyan'; b1.style.cssText='flex:1;min-height:50px;';
+    b1.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg> 백업';
+    b1.onclick = function(){ backupData(); playSound('save'); };
+    var b2 = document.createElement('button'); b2.className='tbtn tbtn-ghost'; b2.style.cssText='flex:1;min-height:50px;';
+    b2.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg> 복구';
+    b2.onclick = function(){ document.getElementById('file-input').click(); playSound('open'); };
+    var fi = document.createElement('input'); fi.type='file'; fi.id='file-input'; fi.accept='application/json';
+    fi.style.display='none'; fi.onchange = function(e){ restoreData(e); };
+    var b3 = document.createElement('button'); b3.className='tbtn tbtn-red'; b3.style.cssText='width:100%;min-height:50px;margin-top:4px;';
+    b3.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> 모든 데이터 초기화 (주의)';
+    b3.onclick = function(){ resetAllData(); playSound('delete'); };
+    row.appendChild(b1); row.appendChild(b2);
+    body.appendChild(row); body.appendChild(fi); body.appendChild(b3);
+  }
+
+  var modal = document.getElementById('detail-sheet-modal');
+  modal.classList.add('open');
+  document.body.classList.add('no-scroll');
+  // 스크롤 맨 위로 초기화
+  var bd = document.getElementById('detail-sheet-body');
+  if(bd) bd.scrollTop = 0;
+  playSound('open');
+};
 
 /* 위젯(달성도/추이) 온오프 토글 */
 const toggleCalWidgets = () => {
@@ -4703,10 +5572,23 @@ const toggleCalWidgets = () => {
     DATA.settings.widgetsHidden = hidden;
     save();
   }
+  // 위젯 높이 변경 → 달력 높이 즉시 재계산 (검은 화면 방지)
+  requestAnimationFrame(() => { applyLayout(); });
   playSound('click');
 };
 
 /* 텍스트 직접 명령어 실행 */
+/* VUI 팁 패널 토글 */
+window.vuiToggleTips = function() {
+  var panel = document.getElementById('vui-tips-panel');
+  var btn   = document.getElementById('vui-tip-btn');
+  if(!panel) return;
+  var visible = panel.style.display !== 'none';
+  panel.style.display = visible ? 'none' : 'block';
+  if(btn) btn.innerHTML = visible ? '💡 명령어 팁 ▾' : '💡 명령어 팁 ▴';
+  playSound('click');
+};
+
 window.vuiRunTextCmd = () => {
   const input = document.getElementById('vui-cmd-input');
   if(!input) return;
@@ -4729,7 +5611,109 @@ const toggleVoiceRecognition = () => {
 /* ═══════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════
+   PWA 설치 감지 & 유도
+══════════════════════════════════════════════ */
+(function(){
+  try {
+  var deferredPrompt = null;
+  var bannerShown    = false;
+  var isStandalone =
+    (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) ||
+    (typeof navigator !== 'undefined' && navigator.standalone === true) ||
+    (typeof document !== 'undefined' && document.referrer && document.referrer.includes('android-app://'));
+
+  if(isStandalone) return; // 이미 설치됨 → 아무것도 안 함
+
+  /* 이전에 "닫기" 눌렀으면 7일간 숨김 */
+  var dismissed = localStorage.getItem('pwa_banner_dismiss');
+  if(dismissed && Date.now() < +dismissed) return;
+
+  /* Android Chrome: beforeinstallprompt 이벤트 */
+  window.addEventListener('beforeinstallprompt', function(e){
+    e.preventDefault();
+    deferredPrompt = e;
+    showBanner('android');
+  });
+
+  /* iOS Safari: standalone 아니면 배너 표시 (3초 후) */
+  var isIOS2 = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+  if(isIOS2){
+    setTimeout(function(){ showBanner('ios'); }, 3000);
+  }
+
+  function showBanner(type){
+    if(bannerShown) return;
+    bannerShown = true;
+    var banner = document.getElementById('pwa-banner');
+    var sub    = document.getElementById('pwa-banner-sub');
+    var btn    = document.getElementById('pwa-install-btn');
+    if(!banner) return;
+    if(type === 'ios'){
+      if(sub) sub.textContent = 'Safari 하단 공유 버튼 → 홈 화면에 추가';
+      if(btn) btn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg> 방법 보기';
+    }
+    banner.classList.add('show');
+  }
+
+  /* 설치 버튼 클릭 */
+  window.pwaInstall = function(){
+    var banner = document.getElementById('pwa-banner');
+    var isIOS3 = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    if(deferredPrompt){
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function(r){
+        if(r.outcome === 'accepted' && banner) banner.classList.remove('show');
+        deferredPrompt = null;
+      });
+    } else if(isIOS3){
+      // iOS: 안내 토스트 표시
+      showToast('Safari: 하단 공유버튼 탭 후 홈화면에 추가 선택', '', 6000);
+      if(banner) banner.classList.remove('show');
+    }
+  };
+
+  /* 닫기 버튼: 7일간 숨김 */
+  window.pwaDismiss = function(){
+    var banner = document.getElementById('pwa-banner');
+    if(banner) banner.classList.remove('show');
+    localStorage.setItem('pwa_banner_dismiss', Date.now() + 7*24*60*60*1000);
+  };
+
+  /* 설치 완료 시 배너 숨김 */
+  window.addEventListener('appinstalled', function(){
+    var banner = document.getElementById('pwa-banner');
+    if(banner) banner.classList.remove('show');
+  });
+  } catch(e){} // PWA 감지 안전장치
+})();
+
 document.addEventListener('DOMContentLoaded',()=>{
+
+  /* ── 저사양 기기 자동 감지 → body.low-perf 부착 ──────────────
+     기준: 논리 코어 ≤ 4 또는 RAM ≤ 3GB 또는 Android 구형 UA
+     localStorage 캐시로 매번 측정 부하 방지
+  ─────────────────────────────────────────────────────────── */
+  (function detectLowPerf(){
+    try {
+      var cached = localStorage.getItem('lp_v1');
+      var isLow = false;
+      if(cached !== null) {
+        isLow = cached === '1';
+      } else {
+        var cores = navigator.hardwareConcurrency || 4;
+        var ram   = navigator.deviceMemory      || 4;
+        var ua = navigator.userAgent || '';
+        var oldAndroid = /Android [1-7]\./.test(ua);
+        isLow = (cores <= 4) || (ram <= 2) || oldAndroid;
+        localStorage.setItem('lp_v1', isLow ? '1' : '0');
+      }
+      if(isLow) {
+        document.body.classList.add('low-perf');
+      }
+    } catch(e){}
+  })();
+
   $('today-btn').addEventListener('click',()=>{
     applyLayout();
     requestAnimationFrame(()=>{
@@ -4741,7 +5725,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // 근무형태 변경시 잔업 목록 초기화
   document.querySelectorAll('.wt-radio').forEach(r=>r.addEventListener('change',()=>{$('modal-ot-list').innerHTML='';}));
   // work-modal 배경 클릭 닫기
-  $('work-modal')?.addEventListener('click',e=>{if(e.target===$('work-modal')) closeModal('work-modal');});
+  var wm=$('work-modal'); if(wm) wm.addEventListener('click',function(e){if(e.target===wm) closeModal('work-modal');});
   // fixed-top ResizeObserver
   const top=$('fixed-top'); if(top) _ro.observe(top);
   load();
@@ -4757,6 +5741,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   updateCalWidgets();
 
+  // TTS 상태 복원
+  TTS.setEnabled(DATA.settings.ttsEnabled);
+  var ttsTgl = document.getElementById('tts-toggle');
+  if(ttsTgl) ttsTgl.checked = DATA.settings.ttsEnabled;
+
+  // 티커(도움말) 숨김 복원
+  var tickerEl2 = document.getElementById('utility-ticker-container');
+  if(DATA.settings.tickerHidden && tickerEl2) tickerEl2.style.display = 'none';
+  var tickerTgl = document.getElementById('ticker-toggle');
+  if(tickerTgl) tickerTgl.checked = !DATA.settings.tickerHidden;
+
   // 위젯 숨김 상태 복원
   if (DATA.settings.widgetsHidden) {
     const widgets = document.getElementById('cal-widgets');
@@ -4765,17 +5760,55 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (widgets) widgets.classList.add('widgets-hidden');
     if (btn) { btn.classList.remove('widget-on'); btn.classList.add('widget-off'); }
     if (lbl) lbl.textContent = '위젯 표시';
+    requestAnimationFrame(() => { applyLayout(); });
   }
+
+  // ── 성능 최적화 모드 복원 ─────────────────────────────
+  // 1) 사용자가 수동으로 설정한 lowPerfMode 우선 적용
+  // 2) 자동 감지(lp_v1)와 병합: 둘 중 하나라도 true이면 low-perf 유지
+  (function restoreLowPerfMode() {
+    var manualOn = DATA.settings.lowPerfMode === true;
+    var autoOn   = false;
+    try { autoOn = localStorage.getItem('lp_v1') === '1'; } catch(_) {}
+    var shouldApply = manualOn || autoOn;
+
+    // body.low-perf 클래스 상태 동기화
+    if (shouldApply) {
+      document.body.classList.add('low-perf');
+    } else {
+      document.body.classList.remove('low-perf');
+    }
+
+    // 설정 UI 토글 동기화 (수동 설정값 기준)
+    var tog = document.getElementById('perf-mode-toggle');
+    if (tog) tog.checked = manualOn;
+
+    var sub = document.getElementById('perf-mode-sub');
+    if (sub) sub.textContent = manualOn
+      ? '✅ 활성 중 — 블러/애니메이션 OFF, 속도 향상'
+      : '구형 기기에서 앱 반응 속도를 높입니다';
+
+    // 저사양 기기 성능 등급 배지 업데이트 (설정탭 진입 전에도 계산)
+    setTimeout(detectAndShowPerfGrade, 300);
+  })();
 
   syncLayout();
   setTimeout(syncLayout,100);
   setTimeout(syncLayout,400);
   window.addEventListener('resize',()=>syncLayoutSoon(50));
   window.addEventListener('orientationchange',()=>syncLayoutSoon(200));
-  if(window.visualViewport) window.visualViewport.addEventListener('resize',()=>syncLayoutSoon(50));
-  // 파티클 생성
+  if(window.visualViewport) window.visualViewport.addEventListener('resize',()=>{
+    syncLayoutSoon(50);
+    // 키보드 올라올 때 ds-sheet 높이 재계산
+    var ds = document.querySelector('.ds-sheet');
+    if(ds && document.getElementById('detail-sheet-modal').classList.contains('open')){
+      var avail = window.visualViewport.height;
+      ds.style.maxHeight = Math.min(avail * 0.92, window.innerHeight * 0.88) + 'px';
+    }
+  });
+  // 파티클 생성 (저사양 모드에서는 생략)
   const particles=$('splash-particles');
-  if(particles){
+  if(particles && !document.body.classList.contains('low-perf')){
     for(let i=0;i<18;i++){
       const d=document.createElement('div');
       d.className='splash-dot';
@@ -4791,13 +5824,14 @@ document.addEventListener('DOMContentLoaded',()=>{
       particles.appendChild(d);
     }
   }
-  // splash 제거 (로딩바 1.8s + 여유 0.4s)
+  // splash 제거 — 저사양 모드는 800ms, 일반은 2200ms
   const splash=$('splash');
   if(splash){
+    const splashDelay = document.body.classList.contains('low-perf') ? 800 : 2200;
     setTimeout(()=>{
       splash.style.opacity='0';
       setTimeout(()=>{ splash.remove(); syncLayout(); }, 600);
-    }, 2200);
+    }, splashDelay);
   }
 });
 </script>
