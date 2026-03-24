@@ -4912,12 +4912,18 @@ const VUI = (() => {
     /* ── 기간 키 파싱 헬퍼 ── */
     const parseQueryKey = function() {
       var yr = today.getFullYear();
+      // 4자리 연도 + 월: "2025년 8월"
       var ymM = raw.match(/(\d{4})년\s*(\d{1,2})월/);
       if(ymM) return getPeriodKey(new Date(+ymM[1], +ymM[2]-1, 25));
+      // 2자리 연도 + 월: "25년 8월"
       var ymS = raw.match(/(\d{2})년\s*(\d{1,2})월/);
       if(ymS) return getPeriodKey(new Date(2000 + +ymS[1], +ymS[2]-1, 25));
+      // 4자리 연도만: "2025년"
       var yOnly = raw.match(/(\d{4})년/);
       if(yOnly && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(+yOnly[1], today.getMonth(), 25));
+      // 2자리 연도만: "25년"
+      var yOnly2 = raw.match(/(\d{2})년/);
+      if(yOnly2 && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(2000 + +yOnly2[1], today.getMonth(), 25));
       if(cmd.match(/올해/)) return getPeriodKey(new Date(yr, today.getMonth(), 25));
       if(cmd.match(/작년/)) return getPeriodKey(new Date(yr-1, today.getMonth(), 25));
       if(cmd.match(/내년/)) return getPeriodKey(new Date(yr+1, today.getMonth(), 25));
@@ -4945,14 +4951,16 @@ const VUI = (() => {
     if(cmd.match(/달력|캘린더/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창|월|년|이번달|오늘/))) {
       fabNav('calendar');
       var navY=today.getFullYear(), navM=today.getMonth();
-      var ymN=raw.match(/(\d{4})년\s*(\d{1,2})월/);
-      var ymS3=raw.match(/(\d{2})년\s*(\d{1,2})월/);
-      var mN=raw.match(/(\d{1,2})월/);
-      var yN3=raw.match(/(\d{4})년/);
-      if(ymN){navY=+ymN[1];navM=+ymN[2]-1;}
-      else if(ymS3){navY=2000+ +ymS3[1];navM=+ymS3[2]-1;}
-      else if(yN3 && !mN){navY=+yN3[1];}
-      else if(mN && !cmd.match(/이번달/)){ navM=+mN[1]-1; }
+      var ymN  = raw.match(/(\d{4})년\s*(\d{1,2})월/);   // "2025년 8월"
+      var ymS3 = raw.match(/(\d{2})년\s*(\d{1,2})월/);   // "25년 8월"
+      var yN4  = raw.match(/(\d{4})년/);                  // "2025년"
+      var yN2  = raw.match(/(\d{2})년/);                  // "25년"
+      var mN   = raw.match(/(\d{1,2})월/);                // "8월"
+      if(ymN)       { navY=+ymN[1];           navM=+ymN[2]-1; }
+      else if(ymS3) { navY=2000+ +ymS3[1];    navM=+ymS3[2]-1; }
+      else if(yN4 && !mN) { navY=+yN4[1]; }
+      else if(yN2 && !mN) { navY=2000+ +yN2[1]; }
+      else if(mN && !cmd.match(/이번달/)) { navM=+mN[1]-1; }
       var navId='month-'+navY+'-'+navM;
       setTimeout(function(){
         scrollToMonth(navId,false);
@@ -5007,19 +5015,25 @@ const VUI = (() => {
       if(!qkey && cmd.match(/월급|얼마|실수령|급여|수령액/)) qkey = getPeriodKey(today);
       if(!qkey){ setTicker('❓','"이번달 야간", "8월 실수령액", "2025년 8월 잔업" 처럼 말씀해 주세요'); return done(); }
       var qs=calcStats(qkey), qlbl=keyLabel(qkey);
+      // 실수령액 = totalSalary(기본급+수당합계) + totalDeductions(음수값)
+      var netPay = Math.floor(qs.totalSalary + qs.totalDeductions);
+      var netWan = Math.floor(netPay / 10000);
       if(cmd.includes('야간')) {
         var ttsS1 = qlbl+' 야간 '+qs.nightDays+'일, '+Math.floor(qs.nightAmount/10000)+'만원';
         setTicker('🌙', qlbl+' 야간: '+qs.nightDays+'일 ('+fmtWon(qs.nightAmount)+')');
         _ttsSpeakSafe(ttsS1, true);
       } else if(cmd.includes('특근')) {
+        var ttsS2 = qlbl+' 특근 '+qs.specialDays+'일, '+Math.floor(qs.specialAmount/10000)+'만원';
         setTicker('💪', qlbl+' 특근: '+qs.specialDays+'일 ('+fmtWon(qs.specialAmount)+')');
+        _ttsSpeakSafe(ttsS2, true);
       } else if(cmd.includes('잔업')||cmd.includes('연장')) {
         var ttsS3 = qlbl+' 잔업 '+(qs.weekdayOT+qs.specialOT).toFixed(1)+'시간, '+Math.floor(qs.totalOvertimePay/10000)+'만원';
         setTicker('⏱️', qlbl+' 잔업: '+(qs.weekdayOT+qs.specialOT).toFixed(1)+'h ('+fmtWon(qs.totalOvertimePay)+')');
         _ttsSpeakSafe(ttsS3, true);
       } else {
-        var ttsS4 = qlbl+' 예상 실수령액 '+Math.floor(qs.totalSalary/10000)+'만원';
-        setTicker('💰', qlbl+' 예상 실수령: '+Math.floor(qs.totalSalary).toLocaleString()+'원');
+        // 기본: 실수령액 안내 (공제 적용 후)
+        var ttsS4 = qlbl+' 예상 실수령액 '+netWan+'만원';
+        setTicker('💰', qlbl+' 예상 실수령: '+netPay.toLocaleString()+'원');
         _ttsSpeakSafe(ttsS4, true);
       }
       playSound('click'); return done();
