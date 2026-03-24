@@ -3542,20 +3542,31 @@ const TTS = (function(){
     }
   }
 
-  /* ── iOS 15+ speechSynthesis 멈춤 방지 워치독 ── */
+  /* ── iOS 15+ speechSynthesis 멈춤 방지 워치독 (개선) ── */
   var _watchdog = null;
+  var _watchdogFast = null;
   function startWatchdog(u) {
     clearInterval(_watchdog);
+    clearInterval(_watchdogFast);
+    // iOS: 짧은 주기(5초)로 pause/resume 반복 → 멈춤 방지
     _watchdog = setInterval(function(){
       if(!synth) { clearInterval(_watchdog); return; }
-      if(synth.speaking && !synth.paused) {
-        synth.pause();
-        synth.resume();
-      } else {
+      if(synth.speaking) {
+        // paused 상태든 아니든 강제 resume (iOS 백그라운드 정지 대응)
+        try { synth.pause(); synth.resume(); } catch(e2){}
+      } else if(!synth.pending) {
         clearInterval(_watchdog);
       }
-    }, 10000);
-    if(u) u.onend = function(){ clearInterval(_watchdog); };
+    }, 5000);
+    // iOS: 첫 1.5초 이내 멈춤 즉시 회복 (빠른 감지)
+    _watchdogFast = setInterval(function(){
+      if(!synth) { clearInterval(_watchdogFast); return; }
+      if(synth.speaking && synth.paused) {
+        try { synth.resume(); } catch(e2){}
+      }
+    }, 500);
+    function _clearAll(){ clearInterval(_watchdog); clearInterval(_watchdogFast); }
+    if(u) { u.onend = _clearAll; u.onerror = _clearAll; }
   }
 
   /* ── 실제 발화 실행 (내부) ── */
@@ -3569,11 +3580,17 @@ const TTS = (function(){
         return;
       }
     }
+    // iOS: 이미 speaking 상태면 cancel 후 재시도 (AudioSession 충돌 방지)
+    if(synth.speaking || synth.pending) {
+      synth.cancel();
+      setTimeout(function(){ _doSpeak(text); }, 150);
+      return;
+    }
     var u = new SpeechSynthesisUtterance(text);
     u.lang   = 'ko-KR';
     u.rate   = 1.05;
     u.pitch  = 1.0;
-    u.volume = 1.0;  // 0.9 → 1.0 으로 올려 구형폰 출력 보장
+    u.volume = 1.0;
     if(preferVoice) u.voice = preferVoice;
     startWatchdog(u);
     synth.speak(u);
@@ -4689,6 +4706,16 @@ const VUI = (() => {
      지원: 근무등록/잔업/기간일괄/특정날짜/기본급·수당/
            목표급여/통계조회/화면전환/삭제/현황확인
   ═══════════════════════════════════════════════ */
+  /* iOS: 마이크 AudioSession 종료 후 TTS 발화 가능 — 딜레이 래퍼 */
+  const _ttsSpeakSafe = (text, priority) => {
+    if(isIOS) {
+      // iOS는 recognition.onend 이후 AudioSession 해제까지 ~300ms 필요
+      setTimeout(function(){ TTS.speak(text, priority); }, 400);
+    } else {
+      TTS.speak(text, priority);
+    }
+  };
+
   const processCommand = (transcript) => {
     const raw  = transcript.trim();
     const cmd  = raw.replace(/\s+/g, '');
@@ -4922,7 +4949,7 @@ const VUI = (() => {
         save(); updateCalWidgets();
         const gi = document.getElementById('goal-salary-input');
         if(gi) gi.value = amount;
-        TTS.speak('목표 급여 '+Math.floor(amount/10000)+'만원으로 설정', true);
+        _ttsSpeakSafe('목표 급여 '+Math.floor(amount/10000)+'만원으로 설정', true);
         setTicker('🎯',`목표 급여를 ${fmtWon(amount)}으로 설정했어요`);
         playSound('save'); return done();
       }
@@ -4954,17 +4981,17 @@ const VUI = (() => {
       if(cmd.includes('야간')) {
         var ttsS1 = qlbl+' 야간 '+qs.nightDays+'일, '+Math.floor(qs.nightAmount/10000)+'만원';
         setTicker('🌙', qlbl+' 야간: '+qs.nightDays+'일 ('+fmtWon(qs.nightAmount)+')');
-        TTS.speak(ttsS1, true);
+        _ttsSpeakSafe(ttsS1, true);
       } else if(cmd.includes('특근')) {
         setTicker('💪', qlbl+' 특근: '+qs.specialDays+'일 ('+fmtWon(qs.specialAmount)+')');
       } else if(cmd.includes('잔업')||cmd.includes('연장')) {
         var ttsS3 = qlbl+' 잔업 '+(qs.weekdayOT+qs.specialOT).toFixed(1)+'시간, '+Math.floor(qs.totalOvertimePay/10000)+'만원';
         setTicker('⏱️', qlbl+' 잔업: '+(qs.weekdayOT+qs.specialOT).toFixed(1)+'h ('+fmtWon(qs.totalOvertimePay)+')');
-        TTS.speak(ttsS3, true);
+        _ttsSpeakSafe(ttsS3, true);
       } else {
         var ttsS4 = qlbl+' 예상 실수령액 '+Math.floor(qs.totalSalary/10000)+'만원';
         setTicker('💰', qlbl+' 예상 실수령: '+Math.floor(qs.totalSalary).toLocaleString()+'원');
-        TTS.speak(ttsS4, true);
+        _ttsSpeakSafe(ttsS4, true);
       }
       playSound('click'); return done();
     }
@@ -4983,7 +5010,7 @@ const VUI = (() => {
       const ds = fmtDate(targetDate);
       const rec = DATA.workRecords[ds];
       if(!rec || rec.type==='미선택') {
-        TTS.speak(dateLabel+'에 먼저 근무 형태를 등록해 주세요', true);
+        _ttsSpeakSafe(dateLabel+'에 먼저 근무 형태를 등록해 주세요', true);
         setTicker('❓',`${dateLabel}에 먼저 근무 형태를 등록해 주세요`); return done();
       }
       const roundedH = Math.round(otHours * 2) / 2; // 0.5h 단위
@@ -5005,6 +5032,7 @@ const VUI = (() => {
       updatePanel();
       const cnt = dates.length > 1 ? `${dateLabel} ${dates.length}일` : `${dateLabel}(${targetDate.getDate()}일)`;
       setTicker('✅',`${cnt} [${workType}] + 잔업 ${Math.round(otHours*2)/2}h 등록!`);
+      _ttsSpeakSafe(`${cnt} ${workType} 잔업 ${Math.round(otHours*2)/2}시간 등록했습니다`, true);
       playSound('save'); return done();
     }
 
@@ -5019,8 +5047,10 @@ const VUI = (() => {
       updatePanel();
       if(dates.length > 1) {
         setTicker('✅',`${dateLabel} ${dates.length}일 [${workType}] 일괄 등록!`);
+        _ttsSpeakSafe(`${dateLabel} ${dates.length}일 ${workType} 등록했습니다`, true);
       } else {
         setTicker('✅',`${dateLabel}(${targetDate.getDate()}일) [${workType}] 등록!`);
+        _ttsSpeakSafe(`${dateLabel} ${workType} 등록했습니다`, true);
       }
       playSound('save'); return done();
     }
@@ -5036,7 +5066,7 @@ const VUI = (() => {
       updatePanel();
       if(cnt > 0) {
         const lbl = dates.length > 1 ? `${dateLabel} ${cnt}일` : `${dateLabel}(${targetDate.getDate()}일)`;
-        TTS.speak(lbl+' 기록 삭제', true);
+        _ttsSpeakSafe(lbl+' 기록 삭제', true);
         setTicker('🗑️',`${lbl} 기록 삭제`); playSound('delete');
       } else {
         setTicker('❓',`${dateLabel}에 삭제할 기록이 없습니다`);
@@ -5081,8 +5111,8 @@ const VUI = (() => {
       const mb=micBtn();
       if(mb){ mb.classList.add('mic-listening'); if(isIOS) mb.classList.add('mic-ios-try'); }
       setTicker('🎙️', isIOS ? '🍎 말씀해 주세요...' : '듣고 있습니다...');
-      // 마이크 활성 중 TTS 동시 발화 금지 (브라우저가 억제함 → 목소리 안 들리는 원인)
-      // TTS.speak(isIOS ? '말씀해 주세요' : '듣고 있습니다', false);
+      // iOS: 마이크 활성 중 TTS 중단 (AudioSession 충돌 방지)
+      if(isIOS) TTS.cancel();
       overlayOpen();
     };
     recognition.onresult = (e) => {
@@ -5092,7 +5122,11 @@ const VUI = (() => {
       if(ot){ ot.textContent=t; ot.className=e.results[0].isFinal?'':'interim'; }
       const ol=document.getElementById('vui-transcript-label');
       if(ol) ol.textContent=e.results[0].isFinal?'인식 완료':'🎙 듣고 있습니다';
-      if(e.results[0].isFinal){ _iosFailCount=0; processCommand(t); overlayClose(800); }
+      if(e.results[0].isFinal){
+        _iosFailCount=0;
+        processCommand(t);
+        overlayClose(800);
+      }
     };
     recognition.onerror = (e) => {
       isListening=false;
@@ -5136,6 +5170,9 @@ const VUI = (() => {
       isListening=false;
       const mb=micBtn();
       if(mb){ mb.classList.remove('mic-listening'); mb.classList.remove('mic-ios-try'); }
+      // iOS: 마이크 AudioSession 해제 후 TTS 발화 가능해짐 (300ms 대기)
+      // processCommand 내부의 TTS.speak() 가 여기서 실제로 실행되도록 허용
+      var _ttsDelay = isIOS ? 350 : 0;
       setTimeout(function(){
         if(!isListening){
           tickerContainer()&&tickerContainer().classList.remove('vui-active');
@@ -5143,7 +5180,7 @@ const VUI = (() => {
           rotateTicker();
           overlayClose(0);
         }
-      }, 3500);
+      }, Math.max(3500, _ttsDelay));
     };
   };
 
@@ -5225,14 +5262,29 @@ const VUI = (() => {
       if(!recognition) initSpeech();
       if(!recognition){ openTextFallback(); return; }
       if(isListening){
-        recognition.stop();
+        try { recognition.stop(); } catch(e) {}
       } else {
-        // iOS: 매번 recognition 재생성 (Safari 세션 버그 대응)
+        // iOS: 매번 recognition 재생성 (Safari AudioSession 세션 버그 대응)
         if(isIOS){
           try{ recognition.abort(); }catch(_){}
           recognition = null;
-          initSpeech();
-          if(!recognition){ openTextFallback(); return; }
+          // iOS는 abort 직후 AudioSession 해제 시간 필요 (200ms)
+          setTimeout(function(){
+            initSpeech();
+            if(!recognition){ openTextFallback(); return; }
+            try{
+              recognition.start();
+            } catch(e){
+              if(e.name==='InvalidStateError'){
+                recognition=null;
+                setTimeout(function(){
+                  initSpeech();
+                  try{ recognition && recognition.start(); }catch(_){ openTextFallback(); }
+                }, 300);
+              } else { speechAvailable=false; updateMicBtnIcon(); openTextFallback(); }
+            }
+          }, 200);
+          return;
         }
         try{
           recognition.start();
