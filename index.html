@@ -4718,7 +4718,36 @@ const VUI = (() => {
 
   const processCommand = (transcript) => {
     const raw  = transcript.trim();
-    const cmd  = raw.replace(/\s+/g, '');
+
+    /* ══════════════════════════════════════════════════
+       전처리 필터 — 추임새·조사·불필요 표현 제거 후 분석
+       "어.. 내일 주간특근으로 등록해 줄래?" → "내일주간특근등록"
+    ══════════════════════════════════════════════════ */
+    const _preprocess = (s) => {
+      return s
+        // 추임새·망설임
+        .replace(/어+\.+|음+\.+|그+\.+|아+\.+|저+\.+|뭐+\.+/g, '')
+        .replace(/\b(어|음|그|아|저|뭐|이제|그냥|좀|한번|제발|부탁|혹시|있잖아|있잖|근데|그리고)\b/g, '')
+        // 경어·요청 표현
+        .replace(/해\s*줘|해\s*줄래|해\s*줄게|해\s*줬으면|해\s*주세요|해\s*주시겠어요|해\s*주라/g, '')
+        .replace(/알려\s*줘|알려\s*줄래|보여\s*줘|보여\s*줄래/g, '보여줘')
+        .replace(/으로\s*등록|으로\s*설정|으로\s*바꿔|로\s*등록|로\s*설정/g, '등록')
+        // 조사 정리
+        .replace(/에서|에게|한테|으로|로서|로부터|이랑|와함께|랑|이나|이든|든/g, '')
+        // 공백 정리
+        .replace(/\s+/g, '');
+    };
+    const cmd  = _preprocess(raw);
+
+    /* ── 인텐트(의도) 유의어 그룹 ────────────────────────
+       각 인텐트를 정규식으로 한번에 판별
+    ─────────────────────────────────────────────────── */
+    // 화면이동/조회 인텐트
+    const INTENT_VIEW  = /조회|확인|보여줘|열어줘|띄워|이동|검색|찾아|가줘|가볼게|켜줘|봐줘/;
+    // 등록/수정 인텐트
+    const INTENT_REG   = /등록|추가|입력|저장|설정|기록|넣어|해줘/;
+    // 삭제 인텐트
+    const INTENT_DEL   = /삭제|취소|지워|빼줘|없애|제거|비워/;
     const today = new Date();
 
     /* ── 헬퍼 ── */
@@ -4905,15 +4934,15 @@ const VUI = (() => {
       return parts[0]+'년 '+parts[1]+'월';
     };
 
-    // ① 화면 전환
-    if(cmd.match(/통계보여줘|통계열어줘|통계이동|통계탭|통계화면/)) {
+    // ① 화면 전환 — 유의어 확장
+    if(cmd.match(/통계/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창/))) {
       fabNav('stats'); setTicker('📊','통계 화면으로 이동했어요'); playSound('open'); return done();
     }
-    if(cmd.match(/설정보여줘|설정열어줘|설정이동|설정탭|설정화면/)) {
+    if(cmd.match(/설정/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창/))) {
       fabNav('settings'); setTicker('⚙️','설정 화면으로 이동했어요'); playSound('open'); return done();
     }
     // 달력 + 특정 월 이동
-    if((cmd.match(/달력|이동/) && cmd.match(/월|년|이번달|오늘/))) {
+    if(cmd.match(/달력|캘린더/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창|월|년|이번달|오늘/))) {
       fabNav('calendar');
       var navY=today.getFullYear(), navM=today.getMonth();
       var ymN=raw.match(/(\d{4})년\s*(\d{1,2})월/);
@@ -4936,9 +4965,6 @@ const VUI = (() => {
         },350);
       },200);
       setTicker('📅', navY+'년 '+(navM+1)+'월 달력으로 이동했어요'); playSound('open'); return done();
-    }
-    if(cmd.match(/달력보여줘|달력열어줘|달력탭|달력화면/)) {
-      fabNav('calendar'); setTicker('📅','달력 화면으로 이동했어요'); playSound('open'); return done();
     }
 
     // ② 목표 급여 설정
@@ -4972,10 +4998,13 @@ const VUI = (() => {
       setTicker('❓','"기본급 300만원" 처럼 말씀해 주세요'); return done();
     }
 
-    // ④ 월간 통계 조회 (특정연월/이번달/지난달)
-    if(cmd.match(/이번달|이번 달|월급|얼마|실수령/) || (raw.match(/\d{1,4}월/) && cmd.match(/야간|특근|잔업|실수령|월급|얼마/))) {
+    // ④ 월간 통계 조회 (특정연월/이번달/지난달) — 유의어 확장
+    const _isStatQuery = cmd.match(/이번달|이번달|월급|얼마|실수령|급여|수령액|수입/) ||
+      (raw.match(/\d{1,4}월/) && cmd.match(/야간|특근|잔업|실수령|월급|얼마|급여/)) ||
+      (cmd.match(/이번달|지난달|다음달/) && cmd.match(INTENT_VIEW));
+    if(_isStatQuery) {
       var qkey = parseQueryKey();
-      if(!qkey && cmd.match(/월급|얼마|실수령/)) qkey = getPeriodKey(today);
+      if(!qkey && cmd.match(/월급|얼마|실수령|급여|수령액/)) qkey = getPeriodKey(today);
       if(!qkey){ setTicker('❓','"이번달 야간", "8월 실수령액", "2025년 8월 잔업" 처럼 말씀해 주세요'); return done(); }
       var qs=calcStats(qkey), qlbl=keyLabel(qkey);
       if(cmd.includes('야간')) {
@@ -4996,8 +5025,9 @@ const VUI = (() => {
       playSound('click'); return done();
     }
 
-    // ⑤ 근무 현황 확인
-    if(cmd.includes('현황')||cmd.includes('근무현황')||cmd.includes('근무확인')) {
+    // ⑤ 근무 현황 확인 — 유의어 확장
+    if(cmd.match(/현황|근무현황|근무확인|근무조회|이번달근무|근무상황|근무내역/) ||
+       (cmd.match(/근무/) && cmd.match(INTENT_VIEW))) {
       var hkey = parseQueryKey() || getPeriodKey(today);
       var hs=calcStats(hkey), hlbl=keyLabel(hkey);
       var htotal=Object.values(DATA.workRecords).filter(function(r){ return getPeriodKey(new Date(r.date))===hkey; }).length;
@@ -5055,8 +5085,8 @@ const VUI = (() => {
       playSound('save'); return done();
     }
 
-    // ⑨ 삭제
-    if(cmd.includes('삭제')||cmd.includes('취소')||cmd.includes('지워')) {
+    // ⑨ 삭제 — 유의어 확장
+    if(cmd.match(INTENT_DEL)) {
       const dates = multiDates || [targetDate];
       let cnt = 0;
       dates.forEach(dt => {
@@ -5075,16 +5105,16 @@ const VUI = (() => {
     }
 
     // ⑩ 설정 토글
-    if(cmd.match(/라이트|밝게|화이트모드/)) {
+    if(cmd.match(/라이트|밝게|화이트모드|라이트모드|밝은모드/)) {
       toggleTheme(true); setTicker('☀️','라이트 모드로 전환했어요'); playSound('toggle'); return done();
     }
-    if(cmd.match(/다크|어둡게|다크모드/)) {
+    if(cmd.match(/다크|어둡게|다크모드|어두운모드|야간모드/)) {
       toggleTheme(false); setTicker('🌙','다크 모드로 전환했어요'); playSound('toggle'); return done();
     }
-    if(cmd.match(/효과음켜|소리켜|음소거해제/)) {
+    if(cmd.match(/효과음켜|소리켜|음소거해제|효과음켜줘|소리켜줘|음소거풀어/)) {
       toggleMute(true); setTicker('🔊','효과음을 켰어요'); return done();
     }
-    if(cmd.match(/효과음꺼|소리꺼|음소거/)) {
+    if(cmd.match(/효과음꺼|소리꺼|음소거|효과음꺼줘|소리꺼줘|조용히/)) {
       toggleMute(false); setTicker('🔇','효과음을 껐어요'); return done();
     }
 
@@ -5256,8 +5286,34 @@ const VUI = (() => {
     setTimeout(rotateTicker, 3500);
   };
 
+  /* ── TTS 오디오 락 해제 (브라우저 Autoplay Policy 우회) ──────────
+     마이크 버튼을 누르는 사용자 제스처(터치) 컨텍스트 안에서
+     빈 발화(공백)를 즉시 실행 → 브라우저 오디오 권한 잠금 해제.
+     이후 비동기 TTS 발화가 차단 없이 재생됨.
+  ─────────────────────────────────────────────────────────────── */
+  var _audioUnlocked = false;
+  const _unlockAudio = () => {
+    if(_audioUnlocked) return;
+    var synth = window.speechSynthesis;
+    if(!synth) return;
+    try {
+      // 안드로이드: 잔여 대기열 강제 초기화
+      synth.cancel();
+      // 빈 발화로 오디오 컨텍스트 활성화
+      var u = new SpeechSynthesisUtterance('\u200b'); // 제로폭 공백
+      u.volume = 0;
+      u.rate   = 2;
+      u.lang   = 'ko-KR';
+      u.onend  = function(){ _audioUnlocked = true; };
+      u.onerror= function(){ _audioUnlocked = true; }; // 실패해도 잠금 해제 시도로 간주
+      synth.speak(u);
+    } catch(e) { _audioUnlocked = true; }
+  };
+
   /* 토글 (마이크 버튼 클릭) */
   const toggle = () => {
+    // 사용자 제스처 컨텍스트 안에서 즉시 오디오 언락
+    _unlockAudio();
     if(speechAvailable){
       if(!recognition) initSpeech();
       if(!recognition){ openTextFallback(); return; }
