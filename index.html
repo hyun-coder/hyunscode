@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -4720,20 +4721,18 @@ const VUI = (() => {
     const raw  = transcript.trim();
 
     /* ══════════════════════════════════════════════════
-       전처리 필터 — 추임새·조사·불필요 표현 제거 후 분석
+       전처리 필터 — 추임새·경어만 제거, 날짜·숫자는 보호
        "어.. 내일 주간특근으로 등록해 줄래?" → "내일주간특근등록"
+       "25년 8월 실수령액 알려줘" → "25년8월실수령액"  ← 연도 보호
     ══════════════════════════════════════════════════ */
     const _preprocess = (s) => {
       return s
-        // 추임새·망설임
-        .replace(/어+\.+|음+\.+|그+\.+|아+\.+|저+\.+|뭐+\.+/g, '')
-        .replace(/\b(어|음|그|아|저|뭐|이제|그냥|좀|한번|제발|부탁|혹시|있잖아|있잖|근데|그리고)\b/g, '')
-        // 경어·요청 표현
+        // 추임새·망설임 (단독 음절만, 숫자/단어 앞뒤 제외)
+        .replace(/(?<![가-힣\d])(어+|음+|그+|아+|저+|뭐+)(?=[\s.,]|$)/g, '')
+        // 경어·요청 표현 (문장 끝 동사구)
         .replace(/해\s*줘|해\s*줄래|해\s*줄게|해\s*줬으면|해\s*주세요|해\s*주시겠어요|해\s*주라/g, '')
-        .replace(/알려\s*줘|알려\s*줄래|보여\s*줘|보여\s*줄래/g, '보여줘')
-        .replace(/으로\s*등록|으로\s*설정|으로\s*바꿔|로\s*등록|로\s*설정/g, '등록')
-        // 조사 정리
-        .replace(/에서|에게|한테|으로|로서|로부터|이랑|와함께|랑|이나|이든|든/g, '')
+        .replace(/알려\s*줘|알려\s*줄래/g, '')
+        .replace(/(?<![년월일\d])(으로\s*등록|으로\s*설정|으로\s*바꿔|로\s*등록|로\s*설정)/g, '등록')
         // 공백 정리
         .replace(/\s+/g, '');
     };
@@ -4912,25 +4911,25 @@ const VUI = (() => {
     /* ── 기간 키 파싱 헬퍼 ── */
     const parseQueryKey = function() {
       var yr = today.getFullYear();
-      // 4자리 연도 + 월: "2025년 8월"
+      // 4자리 연도 + 월: "2025년 8월" — 반드시 4자리 먼저 시도
       var ymM = raw.match(/(\d{4})년\s*(\d{1,2})월/);
       if(ymM) return getPeriodKey(new Date(+ymM[1], +ymM[2]-1, 25));
       // 2자리 연도 + 월: "25년 8월"
-      var ymS = raw.match(/(\d{2})년\s*(\d{1,2})월/);
+      var ymS = raw.match(/(?<!\d)(\d{2})년\s*(\d{1,2})월/);
       if(ymS) return getPeriodKey(new Date(2000 + +ymS[1], +ymS[2]-1, 25));
       // 4자리 연도만: "2025년"
-      var yOnly = raw.match(/(\d{4})년/);
-      if(yOnly && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(+yOnly[1], today.getMonth(), 25));
+      var yOnly4 = raw.match(/(\d{4})년/);
+      if(yOnly4 && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(+yOnly4[1], today.getMonth(), 25));
       // 2자리 연도만: "25년"
-      var yOnly2 = raw.match(/(\d{2})년/);
+      var yOnly2 = raw.match(/(?<!\d)(\d{2})년/);
       if(yOnly2 && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(2000 + +yOnly2[1], today.getMonth(), 25));
       if(cmd.match(/올해/)) return getPeriodKey(new Date(yr, today.getMonth(), 25));
       if(cmd.match(/작년/)) return getPeriodKey(new Date(yr-1, today.getMonth(), 25));
       if(cmd.match(/내년/)) return getPeriodKey(new Date(yr+1, today.getMonth(), 25));
       var mM = raw.match(/(\d{1,2})월/);
       if(mM && !cmd.match(/이번달|오늘/)) return getPeriodKey(new Date(yr, +mM[1]-1, 25));
-      if(cmd.match(/이번달|이번 달/)) return getPeriodKey(today);
-      if(cmd.match(/다음달|다음 달/)){var d1=new Date(today);d1.setMonth(d1.getMonth()+1);return getPeriodKey(d1);}
+      if(cmd.match(/이번달|이번\s*달/)) return getPeriodKey(today);
+      if(cmd.match(/다음달|다음\s*달/)){var d1=new Date(today);d1.setMonth(d1.getMonth()+1);return getPeriodKey(d1);}
       if(cmd.match(/지난달|저번달/)){var d2=new Date(today);d2.setMonth(d2.getMonth()-1);return getPeriodKey(d2);}
       return null;
     };
@@ -4942,37 +4941,40 @@ const VUI = (() => {
 
     // ① 화면 전환 — 유의어 확장
     if(cmd.match(/통계/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창/))) {
-      fabNav('stats'); setTicker('📊','통계 화면으로 이동했어요'); playSound('open'); return done();
+      fabNav('stats');
+      setTicker('📊','통계 화면으로 이동했어요');
+      _ttsSpeakSafe('통계 화면으로 이동합니다', true);
+      playSound('open'); return done();
     }
     if(cmd.match(/설정/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창/))) {
-      fabNav('settings'); setTicker('⚙️','설정 화면으로 이동했어요'); playSound('open'); return done();
+      fabNav('settings');
+      setTicker('⚙️','설정 화면으로 이동했어요');
+      _ttsSpeakSafe('설정 화면으로 이동합니다', true);
+      playSound('open'); return done();
     }
     // 달력 + 특정 월 이동
     if(cmd.match(/달력|캘린더/) && (cmd.match(INTENT_VIEW) || cmd.match(/탭|화면|창|월|년|이번달|오늘/))) {
       fabNav('calendar');
       var navY=today.getFullYear(), navM=today.getMonth();
+      // raw(원문)에서 연도·월 파싱 — 전처리로 파괴되지 않은 원본 사용
       var ymN  = raw.match(/(\d{4})년\s*(\d{1,2})월/);   // "2025년 8월"
       var ymS3 = raw.match(/(\d{2})년\s*(\d{1,2})월/);   // "25년 8월"
       var yN4  = raw.match(/(\d{4})년/);                  // "2025년"
       var yN2  = raw.match(/(\d{2})년/);                  // "25년"
       var mN   = raw.match(/(\d{1,2})월/);                // "8월"
-      if(ymN)       { navY=+ymN[1];           navM=+ymN[2]-1; }
-      else if(ymS3) { navY=2000+ +ymS3[1];    navM=+ymS3[2]-1; }
-      else if(yN4 && !mN) { navY=+yN4[1]; }
-      else if(yN2 && !mN) { navY=2000+ +yN2[1]; }
-      else if(mN && !cmd.match(/이번달/)) { navM=+mN[1]-1; }
+      if(ymN)            { navY=+ymN[1];        navM=+ymN[2]-1; }
+      else if(ymS3)      { navY=2000+ +ymS3[1]; navM=+ymS3[2]-1; }
+      else if(yN4&&!mN)  { navY=+yN4[1]; }
+      else if(yN2&&!mN)  { navY=2000+ +yN2[1]; }
+      else if(mN)        { navM=+mN[1]-1; }
       var navId='month-'+navY+'-'+navM;
+      setTicker('📅', navY+'년 '+(navM+1)+'월 달력으로 이동했어요');
+      _ttsSpeakSafe(navY+'년 '+(navM+1)+'월 달력으로 이동합니다', true);
       setTimeout(function(){
-        scrollToMonth(navId,false);
-        setTimeout(function(){
-          var el=document.getElementById(navId);
-          if(el){
-            document.querySelectorAll('.calendar-month').forEach(function(m){m.classList.remove('active');});
-            el.classList.add('active'); loadPanelUI();
-          }
-        },350);
-      },200);
-      setTicker('📅', navY+'년 '+(navM+1)+'월 달력으로 이동했어요'); playSound('open'); return done();
+        // init=true → active 클래스 설정 + 패널 갱신
+        scrollToMonth(navId, true);
+      }, 200);
+      playSound('open'); return done();
     }
 
     // ② 목표 급여 설정
@@ -4999,10 +5001,12 @@ const VUI = (() => {
           if(key.endsWith('-12') && janTab==='prev') DATA.settings.prevYearBasePays[key] = amount;
           else DATA.settings.basePays[key] = amount;
           save(); loadPanelUI(); updatePanel();
+          _ttsSpeakSafe('기본급 '+Math.floor(amount/10000)+'만원으로 설정했습니다', true);
           setTicker('💴',`기본급을 ${fmtWon(amount)}으로 설정했어요`);
           playSound('save'); return done();
         }
       }
+      _ttsSpeakSafe('기본급 금액을 말씀해 주세요', true);
       setTicker('❓','"기본급 300만원" 처럼 말씀해 주세요'); return done();
     }
 
@@ -5015,8 +5019,9 @@ const VUI = (() => {
       if(!qkey && cmd.match(/월급|얼마|실수령|급여|수령액/)) qkey = getPeriodKey(today);
       if(!qkey){ setTicker('❓','"이번달 야간", "8월 실수령액", "2025년 8월 잔업" 처럼 말씀해 주세요'); return done(); }
       var qs=calcStats(qkey), qlbl=keyLabel(qkey);
-      // 실수령액 = totalSalary(기본급+수당합계) + totalDeductions(음수값)
-      var netPay = Math.floor(qs.totalSalary + qs.totalDeductions);
+      // totalSalary = 기본급 + 수당 + 추가항목(공제 포함) = 실수령액
+      // (추가항목의 음수값이 이미 additionalAmount에 반영되어 있음)
+      var netPay = Math.floor(qs.totalSalary);
       var netWan = Math.floor(netPay / 10000);
       if(cmd.includes('야간')) {
         var ttsS1 = qlbl+' 야간 '+qs.nightDays+'일, '+Math.floor(qs.nightAmount/10000)+'만원';
@@ -5045,7 +5050,9 @@ const VUI = (() => {
       var hkey = parseQueryKey() || getPeriodKey(today);
       var hs=calcStats(hkey), hlbl=keyLabel(hkey);
       var htotal=Object.values(DATA.workRecords).filter(function(r){ return getPeriodKey(new Date(r.date))===hkey; }).length;
+      var htts = hlbl+' 야간 '+hs.nightDays+'일, 특근 '+hs.specialDays+'일, 잔업 '+(hs.weekdayOT+hs.specialOT).toFixed(1)+'시간';
       setTicker('📋', hlbl+' — 야간 '+hs.nightDays+'일 / 특근 '+hs.specialDays+'일 / 잔업 '+(hs.weekdayOT+hs.specialOT).toFixed(1)+'h / 등록 '+htotal+'일');
+      _ttsSpeakSafe(htts, true);
       playSound('click'); return done();
     }
 
@@ -5057,9 +5064,10 @@ const VUI = (() => {
         _ttsSpeakSafe(dateLabel+'에 먼저 근무 형태를 등록해 주세요', true);
         setTicker('❓',`${dateLabel}에 먼저 근무 형태를 등록해 주세요`); return done();
       }
-      const roundedH = Math.round(otHours * 2) / 2; // 0.5h 단위
+      const roundedH = Math.round(otHours * 2) / 2;
       rec.overtimes = [{ name:'VUI잔업', time: roundedH }];
       save(); updateCell(ds); updatePanel();
+      _ttsSpeakSafe(`${dateLabel} 잔업 ${roundedH}시간 등록했습니다`, true);
       setTicker('⏱️',`${dateLabel}(${targetDate.getDate()}일) 잔업 ${roundedH}h 등록!`);
       playSound('save'); return done();
     }
@@ -5120,16 +5128,24 @@ const VUI = (() => {
 
     // ⑩ 설정 토글
     if(cmd.match(/라이트|밝게|화이트모드|라이트모드|밝은모드/)) {
-      toggleTheme(true); setTicker('☀️','라이트 모드로 전환했어요'); playSound('toggle'); return done();
+      toggleTheme(true); setTicker('☀️','라이트 모드로 전환했어요');
+      _ttsSpeakSafe('라이트 모드로 전환했습니다', true);
+      playSound('toggle'); return done();
     }
     if(cmd.match(/다크|어둡게|다크모드|어두운모드|야간모드/)) {
-      toggleTheme(false); setTicker('🌙','다크 모드로 전환했어요'); playSound('toggle'); return done();
+      toggleTheme(false); setTicker('🌙','다크 모드로 전환했어요');
+      _ttsSpeakSafe('다크 모드로 전환했습니다', true);
+      playSound('toggle'); return done();
     }
     if(cmd.match(/효과음켜|소리켜|음소거해제|효과음켜줘|소리켜줘|음소거풀어/)) {
-      toggleMute(true); setTicker('🔊','효과음을 켰어요'); return done();
+      toggleMute(true); setTicker('🔊','효과음을 켰어요');
+      _ttsSpeakSafe('효과음을 켰습니다', true);
+      return done();
     }
     if(cmd.match(/효과음꺼|소리꺼|음소거|효과음꺼줘|소리꺼줘|조용히/)) {
-      toggleMute(false); setTicker('🔇','효과음을 껐어요'); return done();
+      toggleMute(false); setTicker('🔇','효과음을 껐어요');
+      _ttsSpeakSafe('효과음을 껐습니다', true);
+      return done();
     }
 
     // ⑪ 도움말
