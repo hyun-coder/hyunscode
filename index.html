@@ -582,7 +582,8 @@ body.no-scroll{overflow:hidden;touch-action:none;}
 #calendar-view{
   overflow-y:scroll;
   height:calc(100vh - var(--fixed-top-h,120px));
-  scroll-snap-type:y mandatory;scroll-padding-top:8px;
+  /* mandatory→proximity: 강제 스냅 제거, 자연스러운 스크롤 */
+  scroll-snap-type:y proximity;scroll-padding-top:8px;
   overscroll-behavior:contain;padding-bottom:160px;
   padding-top:8px;
 }
@@ -620,7 +621,23 @@ body.no-scroll{overflow:hidden;touch-action:none;}
 }
 .day-cell:not(.disabled):active{background:var(--cyan-bg);border-color:var(--cyan);}
 .day-cell.disabled{background:var(--bg1);opacity:.35;cursor:default;}
-.day-cell.today{border-color:var(--orange)!important;box-shadow:0 0 0 1px var(--orange);}
+.day-cell.today{
+  border-color:var(--orange)!important;
+  box-shadow:0 0 0 2px var(--orange);
+  background:rgba(253,186,116,0.13)!important;
+  position:relative;
+}
+.day-cell.today::after{
+  content:'';position:absolute;inset:-2px;border-radius:11px;
+  border:2px solid var(--orange);
+  animation:todayPulse 2s ease-in-out infinite;
+  pointer-events:none;
+}
+@keyframes todayPulse{
+  0%,100%{opacity:.8;transform:scale(1);}
+  50%{opacity:0;transform:scale(1.18);}
+}
+body.low-perf .day-cell.today::after{animation:none;}
 .day-cell.night-bg{background:var(--night)!important;border-color:rgba(6,182,212,.2)!important;}
 .day-cell.night-bg.disabled{background:var(--night-dim)!important;opacity:.45;}
 .day-cell.holiday .day-num{color:var(--red)!important;}
@@ -1613,6 +1630,13 @@ body::after {
 .calendar-month.active {
   animation: scaleIn .3s ease !important;
 }
+/* FIX13: 터치 영역 최소 44px 보장 (갤럭시 터치 UX) */
+.ibtn, .tbtn, .fab-item, #fab-mic-btn {
+  min-width: 44px; min-height: 44px;
+}
+.fab-item { min-width: 52px; min-height: 52px; }
+/* FAB overlay 클릭 영역 확장 */
+#fab-overlay { cursor: default; }
 
 /* 통계 모드별 배경 – st 변수로 일원화 */
 :root.light .stats-sticky-top { background:var(--st-bg); }
@@ -2360,7 +2384,7 @@ body.low-perf::before { animation: none !important; background: none !important;
     <div style="width:48px;"></div>
     <h1>GD시큐어 월급 계산</h1>
     <!-- 오늘 버튼 – 둥근 사각 캘린더 아이콘 -->
-    <button class="ibtn ibtn-cyan" id="today-btn" title="오늘로 이동">
+    <button class="ibtn ibtn-cyan" id="today-btn" title="오늘로 이동" aria-label="오늘 날짜로 이동">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="3" y="4" width="18" height="18" rx="4"/>
         <line x1="3" y1="9" x2="21" y2="9" stroke-width="1.8"/>
@@ -2379,7 +2403,7 @@ body.low-perf::before { animation: none !important; background: none !important;
         <div class="panel-amount" id="panel-amount">0 원</div>
       </div>
       <!-- 패널 토글 – 둥근 사각 chevron -->
-      <button id="panel-toggle" onclick="togglePanel(); playSound('panel');" title="패널 열기/닫기">
+      <button id="panel-toggle" aria-label="급여 패널 접기/펼치기" onclick="togglePanel(); playSound('panel');" title="패널 열기/닫기">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
           <polyline points="6 9 12 15 18 9"/>
         </svg>
@@ -2561,7 +2585,7 @@ body.low-perf::before { animation: none !important; background: none !important;
       <div class="vui-lamp gray" id="vui-lamp"></div>
       <span id="vui-lamp-txt">VUI</span>
     </div>
-    <button id="fab-mic-btn" onclick="toggleVoiceRecognition()" title="음성 입력">
+    <button id="fab-mic-btn" aria-label="음성 입력" onclick="toggleVoiceRecognition()" title="음성 입력">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
         <rect x="9" y="2" width="6" height="12" rx="3"/>
         <path d="M5 10c0 3.9 3.1 7 7 7s7-3.1 7-7"/>
@@ -2569,7 +2593,7 @@ body.low-perf::before { animation: none !important; background: none !important;
         <line x1="8" y1="21" x2="16" y2="21"/>
       </svg>
     </button>
-    <button id="fab-btn" onclick="toggleFab()" title="메뉴">＋</button>
+    <button id="fab-btn" onclick="toggleFab()" title="메뉴 열기" aria-label="메뉴 열기" aria-expanded="false">＋</button>
     <span id="fab-label">달력/입력</span>
   </div>
 </div>
@@ -2731,7 +2755,7 @@ body.low-perf::before { animation: none !important; background: none !important;
           </div>
           <div class="set-row">
             <div class="set-row-icon ico-orange"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2" fill="currentColor" stroke="none"/></svg></div>
-            <div class="set-row-body"><div class="set-row-title">목표 월급</div><input type="number" inputmode="decimal" id="goal-salary-input" placeholder="예: 3500000" class="ifield" style="margin-top:4px;" oninput="saveGoalSalary()" enterkeyhint="done"></div>
+            <div class="set-row-body"><div class="set-row-title">목표 월급</div><input type="text" inputmode="numeric" pattern="[0-9]*" id="goal-salary-input" placeholder="예: 3500000" class="ifield" style="margin-top:4px;" oninput="saveGoalSalary()" enterkeyhint="done"></div>
           </div>
         </div>
       </div>
@@ -2876,7 +2900,7 @@ body.low-perf::before { animation: none !important; background: none !important;
       <div class="ot-hdr"><div>종류</div><div style="text-align:right;">시간(h)</div><div></div></div>
       <div id="modal-ot-list"></div>
       <!-- 잔업 추가 버튼 – Plus Circle 아이콘 -->
-      <button id="ot-add-btn" class="tbtn tbtn-ghost tbtn-full" style="margin-top:8px;" onclick="addOtModalRow(true); playSound('add');">
+      <button id="ot-add-btn" class="tbtn tbtn-ghost tbtn-full" style="margin-top:8px;" aria-label="잔업 추가" onclick="addOtModalRow(true); playSound('add');">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
         잔업 추가 <span id="ot-count-label" style="font-size:.8em;opacity:.7;">(0/3)</span>
       </button>
@@ -2888,7 +2912,7 @@ body.low-perf::before { animation: none !important; background: none !important;
         닫기
       </button>
       <!-- 삭제 – 휴지통 아이콘 -->
-      <button class="tbtn tbtn-red" id="delete-btn" style="display:none;" onclick="deleteRecord(); playSound('delete');">
+      <button class="tbtn tbtn-red" id="delete-btn" style="display:none;" aria-label="근무 기록 삭제" onclick="deleteRecord(); playSound('delete');">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
         삭제
       </button>
@@ -3378,7 +3402,7 @@ function quickRegister(type) {
 /* ═══════════════════════════════════════════════
    CONSTANTS
 ═══════════════════════════════════════════════ */
-const APP_VER = "5.0.0";
+const APP_VER = "6.18.0";
 const OT_MAP = {'주간':3.0,'야간':4.5,'야간퇴근(칠서)':2.5,'주간특근':0.5,'야간특근':7.0,'17시퇴근':0.5};
 const REG_BONUS = 2000000/12;
 
@@ -3436,9 +3460,15 @@ const getPeriodKey = date => {
 };
 const getActiveKey = () => {
   const el=document.querySelector('.calendar-month.active');
-  if(!el) return getPeriodKey(new Date());
+  if(!el) {
+    // 달력 active 없을 때: 오늘이 속한 달력 월(시각적 달) 기준으로 key 생성
+    const t=new Date();
+    return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}`;
+  }
+  // id = "month-{y}-{m}" (m은 0-based) → 해당 달력 월의 key를 직접 생성
+  // getPeriodKey 우회: 달력에서 보이는 달(월) = 사용자가 인식하는 달
   const [,y,m]=el.id.split('-');
-  return getPeriodKey(new Date(+y,+m,1));
+  return `${y}-${String(+m+1).padStart(2,'0')}`;
 };
 const getPeriodRange = key => {
   if(!key) return null;
@@ -3718,32 +3748,45 @@ const playSound = type => {
   // ── PWA Service Worker (Blob 방식) ──────────────
 if('serviceWorker' in navigator){
   const swCode=`
-    const CACHE='gd-salary-v5';
-    const ASSETS=['./'];
+    const CACHE='gd-salary-v6';
     self.addEventListener('install', e=>{
-      e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting()));
+      e.waitUntil(
+        caches.open(CACHE)
+          .then(c=>c.addAll(['./']))
+          .then(()=>self.skipWaiting())
+          .catch(()=>self.skipWaiting()) // 캐시 실패해도 설치 진행
+      );
     });
     self.addEventListener('activate', e=>{
-      e.waitUntil(clients.claim());
+      // 구버전 캐시 정리
+      e.waitUntil(
+        caches.keys().then(keys=>
+          Promise.all(keys.filter(k=>k!==CACHE).map(k=>caches.delete(k)))
+        ).then(()=>clients.claim())
+      );
     });
     self.addEventListener('fetch', e=>{
+      // chrome-extension / non-http 요청 무시
+      if(!e.request.url.startsWith('http')) return;
       e.respondWith(
         caches.match(e.request).then(r=>{
           if(r) return r;
           return fetch(e.request).then(nr=>{
-            if(nr && nr.status===200){
+            if(nr && nr.status===200 && nr.type==='basic'){
               const rc=nr.clone();
-              caches.open(CACHE).then(c=>c.put(e.request,rc));
+              caches.open(CACHE).then(c=>c.put(e.request,rc)).catch(()=>{});
             }
             return nr;
-          }).catch(()=>caches.match('./'));
+          }).catch(()=>caches.match('./').then(fb=>fb||new Response('',{status:503})));
         })
       );
     });
   `;
-  const blob=new Blob([swCode],{type:'application/javascript'});
-  const swUrl=URL.createObjectURL(blob);
-  navigator.serviceWorker.register(swUrl,{scope:'./'}).catch(()=>{});
+  try{
+    const blob=new Blob([swCode],{type:'application/javascript'});
+    const swUrl=URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl,{scope:'./'}).catch(()=>{});
+  }catch(e){}
 }
 
 document.addEventListener('DOMContentLoaded',()=>{
@@ -3854,9 +3897,16 @@ const calcStats = key => {
   const cls=getClassForDate(period.s);
   const stdH=(cls==='D')?209:226;
   if(isJan){
-    let fbp=bpPrev*(31/12); if(regPrev) fbp+=REG_BONUS;
+    // 하드코딩 대신 실제 날짜 범위로 일수 동적 계산
+    const [ky,km]=key.split('-').map(Number);
+    // 전년도 구간: 12/20 ~ 12/31
+    const prevDays=new Date(ky-1,11,31).getDate()-19; // 31-19=12
+    // 신년도 구간: 1/1 ~ 1/19
+    const currDays=19;
+    const totalDays=prevDays+currDays;
+    let fbp=bpPrev*(totalDays/prevDays); if(regPrev) fbp+=REG_BONUS;
     stats.prevPart.hourlyWage=fbp>0?fbp/stdH:0;
-    let fbc=bpCurr*(31/19); if(regCurr) fbc+=REG_BONUS;
+    let fbc=bpCurr*(totalDays/currDays); if(regCurr) fbc+=REG_BONUS;
     stats.currPart.hourlyWage=fbc>0?fbc/stdH:0;
     stats.basePay=bpPrev+bpCurr;
   } else {
@@ -3980,7 +4030,7 @@ const loadPanelUI = () => {
       const v=DATA.settings.prevYearBasePays[key]||'';
       const isReg=DATA.settings.prevYearRegularPayChecks[key]||false;
       $('base-pay-label').textContent='전년도 기본급';
-      cont.innerHTML=`<input type="number" inputmode="decimal" id="base-pay" placeholder="전년도 기본급" value="${v}" oninput="saveBasePay()" class="ifield" style="flex:1;" enterkeyhint="done"><button onclick="copyBasePay(); playSound('click');">지난달\n복사</button>`;
+      cont.innerHTML=`<input type="text" inputmode="numeric" pattern="[0-9]*" id="base-pay" placeholder="전년도 기본급" value="${v}" oninput="saveBasePay()" class="ifield" style="flex:1;" enterkeyhint="done"><button onclick="copyBasePay(); playSound('click');">지난달\n복사</button>`;
       $('regular-pay-check').checked=isReg;
       $('regular-pay-check').onclick=()=>{saveRegPay();playSound('toggle');};
       $('allowance-label-suffix').textContent='(전년도)';
@@ -3989,7 +4039,7 @@ const loadPanelUI = () => {
       const v=DATA.settings.basePays[key]||'';
       const isReg=DATA.settings.regularPayChecks[key]||false;
       $('base-pay-label').textContent='신년도 기본급';
-      cont.innerHTML=`<input type="number" inputmode="decimal" id="base-pay" placeholder="신년도 기본급" value="${v}" oninput="saveBasePay()" class="ifield" style="flex:1;" enterkeyhint="done"><button onclick="copyBasePay(); playSound('click');">지난달\n복사</button>`;
+      cont.innerHTML=`<input type="text" inputmode="numeric" pattern="[0-9]*" id="base-pay" placeholder="신년도 기본급" value="${v}" oninput="saveBasePay()" class="ifield" style="flex:1;" enterkeyhint="done"><button onclick="copyBasePay(); playSound('click');">지난달\n복사</button>`;
       $('regular-pay-check').checked=isReg;
       $('regular-pay-check').onclick=()=>{saveRegPay();playSound('toggle');};
       $('allowance-label-suffix').textContent='(신년도)';
@@ -4000,7 +4050,7 @@ const loadPanelUI = () => {
     const v=DATA.settings.basePays[key]||'';
     const isReg=DATA.settings.regularPayChecks[key]||false;
     $('base-pay-label').textContent='기본급 입력';
-    cont.innerHTML=`<input type="number" inputmode="decimal" id="base-pay" placeholder="기본급을 입력하세요" value="${v}" oninput="saveBasePay()" class="ifield" style="flex:1;" enterkeyhint="done"><button onclick="copyBasePay(); playSound('click');">지난달\n복사</button>`;
+    cont.innerHTML=`<input type="text" inputmode="numeric" pattern="[0-9]*" id="base-pay" placeholder="기본급을 입력하세요" value="${v}" oninput="saveBasePay()" class="ifield" style="flex:1;" enterkeyhint="done"><button onclick="copyBasePay(); playSound('click');">지난달\n복사</button>`;
     $('regular-pay-check').checked=isReg;
     $('regular-pay-check').onclick=()=>{saveRegPay();playSound('toggle');};
     $('allowance-label-suffix').textContent='';
@@ -4073,7 +4123,7 @@ const addAllowanceItem = (n='',a='') => {
   const div=document.createElement('div'); div.className='aw-item';
   div.innerHTML=`
     <input type="text" placeholder="수당 이름" value="${n}" oninput="saveAllowances()" class="aw-input" style="flex:1.3;" enterkeyhint="done" inputmode="text">
-    <input type="number" inputmode="decimal" placeholder="금액" value="${a}" oninput="saveAllowances()" class="aw-input" style="flex:1;" enterkeyhint="done" inputmode="decimal">
+    <input type="text" inputmode="numeric" pattern="[0-9-]*" placeholder="금액" value="${a}" oninput="saveAllowances()" class="aw-input" style="flex:1;" enterkeyhint="done" inputmode="decimal">
     <button class="ibtn ibtn-ghost ibtn-xs" onclick="toggleSign(this.previousElementSibling); playSound('click');" title="+/-" style="font-size:1.1em;font-weight:900;">±</button>
     <button class="ibtn ibtn-red ibtn-xs" onclick="this.parentNode.remove(); saveAllowances(); updateAllowanceUI(); playSound('delete');" title="삭제">
       <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
@@ -4102,8 +4152,31 @@ const toggleSign = el => {
    CALENDAR
 ═══════════════════════════════════════════════ */
 let _scrollTimer;
+// ── IntersectionObserver: 뷰포트 진입 시 셀 lazy render ──
+let _calIO = null;
+const _renderMonthCells = (el, y, m) => {
+  if(el.dataset.rendered === '1') return;  // '0'은 truthy라 오작동 → 문자열 '1' 비교
+  el.dataset.rendered = '1';
+  const today=new Date();
+  const grid = el.querySelector('.cal-grid');
+  if(!grid) return;
+  grid.innerHTML = '';
+  const first=new Date(y,m,1), days=new Date(y,m+1,0).getDate();
+  for(let i=0;i<first.getDay();i++) grid.insertAdjacentHTML('beforeend','<div class="day-cell disabled" aria-hidden="true"></div>');
+  for(let day=1;day<=days;day++){
+    const date=new Date(y,m,day), ds=fmtDate(date);
+    const cell=document.createElement('div');
+    cell.className='day-cell'; cell.dataset.date=ds;
+    cell.setAttribute('role','button');
+    cell.setAttribute('aria-label',`${y}년 ${m+1}월 ${day}일`);
+    if(fmtDate(today)===ds) cell.classList.add('today');
+    cell.onclick=()=>{openWorkModal(ds);playSound('open');};
+    grid.appendChild(cell); updateCell(ds,cell);
+  }
+};
 const generateCalendar = (scrollToday=false) => {
   const view=$('calendar-view'); view.innerHTML='';
+  if(_calIO){ _calIO.disconnect(); _calIO=null; }
   const today=new Date(), curY=today.getFullYear();
   let startY=2024;
   const ry=Object.keys(DATA.workRecords).map(d=>parseInt(d.split('-')[0]));
@@ -4112,33 +4185,37 @@ const generateCalendar = (scrollToday=false) => {
   if(all.length){const mn=Math.min(...all);if(mn<startY) startY=mn;}
   const endY=curY+1;
   let todayId='';
+  // skeleton 먼저 생성 (DOM 가볍게)
   for(let y=startY;y<=endY;y++){
     const sm=(y===2024&&startY===2024)?11:0;
     for(let m=sm;m<12;m++){
       const id=`month-${y}-${m}`;
       const el=document.createElement('div');
       el.className='calendar-month'; el.id=id;
-      el.innerHTML=`<div class="month-hdr">${y}년 ${m+1}월</div><div class="weekdays"><span class="sun">일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span class="sat">토</span></div>`;
-      const grid=document.createElement('div'); grid.className='cal-grid';
-      el.appendChild(grid);
-      const first=new Date(y,m,1), days=new Date(y,m+1,0).getDate();
-      for(let i=0;i<first.getDay();i++) grid.insertAdjacentHTML('beforeend','<div class="day-cell disabled"></div>');
-      for(let day=1;day<=days;day++){
-        const date=new Date(y,m,day), ds=fmtDate(date);
-        const cell=document.createElement('div');
-        cell.className='day-cell'; cell.dataset.date=ds;
-        if(fmtDate(today)===ds){cell.classList.add('today');todayId=id;}
-        cell.onclick=()=>{openWorkModal(ds);playSound('open');};
-        grid.appendChild(cell); updateCell(ds,cell);
+      el.dataset.y=y; el.dataset.m=m;
+      el.innerHTML=`<div class="month-hdr" role="heading" aria-level="2">${y}년 ${m+1}월</div><div class="weekdays" role="row"><span class="sun" role="columnheader" aria-label="일요일">일</span><span role="columnheader">월</span><span role="columnheader">화</span><span role="columnheader">수</span><span role="columnheader">목</span><span role="columnheader">금</span><span class="sat" role="columnheader" aria-label="토요일">토</span></div><div class="cal-grid" role="grid"></div>`;
+      // 오늘 달은 즉시 렌더 (rendered 플래그 미설정 상태로 바로 호출)
+      if(y===today.getFullYear()&&m===today.getMonth()){
+        _renderMonthCells(el,y,m);
+        todayId=id;
       }
       view.appendChild(el);
     }
   }
+  // IntersectionObserver — 뷰포트 진입 시 셀 렌더
+  _calIO = new IntersectionObserver((entries)=>{
+    entries.forEach(entry=>{
+      if(entry.isIntersecting){
+        const el=entry.target;
+        _renderMonthCells(el,+el.dataset.y,+el.dataset.m);
+      }
+    });
+  },{root:view,rootMargin:'200px 0px',threshold:0});
+  document.querySelectorAll('.calendar-month').forEach(el=>_calIO.observe(el));
   view.removeEventListener('scroll',onCalScroll);
   view.addEventListener('scroll',onCalScroll);
   if(scrollToday&&todayId) scrollToMonth(todayId,true);
   else onCalScroll();
-  // 달력 생성 완료 후 레이아웃 확정
   syncLayout();
   setTimeout(syncLayout, 150);
 };
@@ -4162,42 +4239,61 @@ const updateCell = (ds,cell) => {
   const dayColor=date.getDay()===0||holi?'var(--red)':date.getDay()===6?'var(--cyan)':'var(--txt)';
   el.innerHTML=`<div class="day-num" style="color:${dayColor};">${day}</div><div class="day-status" style="color:${nightColor};">${status}</div><div class="day-ot">${ot>0?ot.toFixed(1)+'h':''}</div>`;
 };
+// programmatic 스크롤 중 onCalScroll이 active를 덮어쓰지 못하도록 잠금
+let _scrollLock = false;
+let _scrollLockTimer = null;
+
 const onCalScroll = () => {
+  if(_scrollLock) return;
   clearTimeout(_scrollTimer);
   _scrollTimer=setTimeout(()=>{
+    if(_scrollLock) return;
     const view=$('calendar-view'); if(!view) return;
-    const top=view.getBoundingClientRect().top;
-    const months=document.querySelectorAll('.calendar-month');
-    let best=null, bestD=Infinity;
-    months.forEach(m=>{const d=Math.abs(top-m.getBoundingClientRect().top);if(d<bestD){bestD=d;best=m;}});
-    if(best&&!best.classList.contains('active')){
+    const viewH = view.clientHeight;
+    const months = document.querySelectorAll('.calendar-month');
+    let best = null, bestArea = -1;
+    months.forEach(m=>{
+      // 뷰포트 내에서 실제로 보이는 픽셀 면적이 가장 큰 달을 active로
+      const top    = m.offsetTop - view.scrollTop;
+      const bottom = top + m.offsetHeight;
+      const visible = Math.max(0, Math.min(bottom, viewH) - Math.max(top, 0));
+      if(visible > bestArea){ bestArea = visible; best = m; }
+    });
+    if(best && !best.classList.contains('active')){
       months.forEach(m=>m.classList.remove('active'));
       best.classList.add('active'); loadPanelUI();
     }
-  },100);
+  },120);
 };
 const scrollToMonth = (id=null,init=false) => {
   const today=new Date();
   const mid=id||`month-${today.getFullYear()}-${today.getMonth()}`;
+  if(!id) init=true;
   const el=$(mid); if(!el) return;
-  applyLayout();
-  requestAnimationFrame(()=>{
-    applyLayout();
-    requestAnimationFrame(()=>{
-      // scrollTop 직접 계산으로 정확히 정렬
-      const view=$('calendar-view');
-      if(view){
-        const containerTop=view.getBoundingClientRect().top;
-        const elTop=el.getBoundingClientRect().top;
-        view.scrollTop=view.scrollTop+(elTop-containerTop);
-      }
-      if(init){
-        clearTimeout(_scrollTimer);
-        document.querySelectorAll('.calendar-month').forEach(m=>m.classList.remove('active'));
-        el.classList.add('active'); loadPanelUI();
-      } else { setTimeout(onCalScroll,50); }
-    });
-  });
+
+  // 1. 스크롤 이벤트 충돌 방지를 위한 강력한 잠금 설정
+  clearTimeout(_scrollTimer);
+  clearTimeout(_scrollLockTimer);
+  _scrollLock = true;
+
+  // 2. 다른 달의 활성화 해제 및 타겟 달 즉시 활성화
+  document.querySelectorAll('.calendar-month').forEach(m=>m.classList.remove('active'));
+  el.classList.add('active');
+  loadPanelUI();
+
+  // 3. 모바일 기기의 레이아웃 계산(Reflow) 완료 대기 후 스크롤
+  setTimeout(() => {
+    const view = $('calendar-view');
+    if(view) {
+      el.scrollIntoView({ behavior: init ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    // 4. 스크롤 이동이 완전히 끝난 후 잠금 해제
+    _scrollLockTimer = setTimeout(()=>{
+      _scrollLock = false;
+      onCalScroll();
+    }, 600);
+  }, 50);
 };
 
 /* ═══════════════════════════════════════════════
@@ -4548,11 +4644,8 @@ const snapCalendarToActive = () => {
   const view = $('calendar-view');
   const active = document.querySelector('.calendar-month.active') || document.querySelector('.calendar-month');
   if(!view || !active) return;
-  // 컨테이너 내부에서 active 월 박스의 상대적 offsetTop 계산
-  const containerTop = view.getBoundingClientRect().top;
-  const activeTop = active.getBoundingClientRect().top;
-  const offset = activeTop - containerTop;
-  view.scrollTop = view.scrollTop + offset;
+  // offsetTop 기반 직접 스크롤 (getBoundingClientRect보다 안정적)
+  view.scrollTop = active.offsetTop;
 };
 
 // 레이아웃 확정 후 달력 위치 정렬 (모든 액션 공통)
@@ -4766,10 +4859,23 @@ const VUI = (() => {
       return m ? parseFloat(m[1]) : null;
     };
     const extractHours = str => {
-      // "2시간30분", "1.5시간", "2시간" → 소수 시간
-      const hm = str.match(/(\d+\.?\d*)시간(?:(\d+)분)?/);
+      // 한글 시간 단어 → 숫자 치환 후 파싱
+      const KOR_TIME = [
+        [/한\s*시간\s*반|한시간반/g,'1.5시간'],[/두\s*시간\s*반|두시간반/g,'2.5시간'],
+        [/세\s*시간\s*반|세시간반/g,'3.5시간'],[/네\s*시간\s*반|네시간반/g,'4.5시간'],
+        [/한\s*시간(?!반)/g,'1시간'],[/두\s*시간(?!반)/g,'2시간'],
+        [/세\s*시간(?!반)/g,'3시간'],[/네\s*시간(?!반)/g,'4시간'],
+        [/다섯\s*시간/g,'5시간'],[/여섯\s*시간/g,'6시간'],
+        [/일곱\s*시간/g,'7시간'],[/여덟\s*시간/g,'8시간'],
+        [/반\s*시간/g,'0.5시간'],
+        [/삼십\s*분|서른\s*분/g,'30분'],[/십오\s*분|열다섯\s*분/g,'15분'],
+        [/사십오\s*분|마흔다섯\s*분/g,'45분'],
+      ];
+      let s = str;
+      KOR_TIME.forEach(([re,rep]) => { s = s.replace(re, rep); });
+      const hm = s.match(/(\d+\.?\d*)시간(?:(\d+)분)?/);
       if(hm) return parseFloat(hm[1]) + (hm[2] ? parseInt(hm[2])/60 : 0);
-      const mm = str.match(/(\d+)분/);
+      const mm = s.match(/(\d+)분/);
       if(mm) return parseInt(mm[1])/60;
       return null;
     };
@@ -4814,7 +4920,9 @@ const VUI = (() => {
     else if(cmd.match(/모레|내일모레/)) { targetDate.setDate(today.getDate()+2); dateLabel='모레'; }
 
     // 특정 날짜 지정: "12일", "5일", "다음달 3일"
-    const dayMatch = cmd.match(/(\d{1,2})일/);
+    // 연도(4자리/2자리)·월 숫자를 제거한 뒤 일(日) 추출 → 오탐 방지
+    const _rawForDay = raw.replace(/\d{4}년/g,'').replace(/(?<![\d])\d{2}년/g,'').replace(/\d{1,2}월/g,'');
+    const dayMatch = _rawForDay.match(/(\d{1,2})일/);
     if(dayMatch && !cmd.match(/오늘|어제|내일|모레|이번주|다음주|지난주|이번달|일부터/)) {
       const d = parseInt(dayMatch[1]);
       if(d >= 1 && d <= 31) {
@@ -4909,28 +5017,35 @@ const VUI = (() => {
     ══════════════════════════════ */
 
     /* ── 기간 키 파싱 헬퍼 ── */
+    // ※ key 구조: "N월"을 말하면 달력 N월 기준 key = '연도-N월'
+    //    달력에서 N월 보면 패널에 key '연도-N월' 데이터 표시 → 음성도 동일 기준
+    const _monthToKey = function(yr, mon) {
+      // mon: 1-based 월 (사용자가 말한 달)
+      // "3월 실수령액" → 달력 3월 패널과 동일한 key = '2025-03'
+      return `${yr}-${String(mon).padStart(2,'0')}`;
+    };
     const parseQueryKey = function() {
       var yr = today.getFullYear();
-      // 4자리 연도 + 월: "2025년 8월" — 반드시 4자리 먼저 시도
+      // 4자리 연도 + 월: "2025년 8월"
       var ymM = raw.match(/(\d{4})년\s*(\d{1,2})월/);
-      if(ymM) return getPeriodKey(new Date(+ymM[1], +ymM[2]-1, 25));
+      if(ymM) return _monthToKey(+ymM[1], +ymM[2]);
       // 2자리 연도 + 월: "25년 8월"
       var ymS = raw.match(/(?<!\d)(\d{2})년\s*(\d{1,2})월/);
-      if(ymS) return getPeriodKey(new Date(2000 + +ymS[1], +ymS[2]-1, 25));
+      if(ymS) return _monthToKey(2000 + +ymS[1], +ymS[2]);
       // 4자리 연도만: "2025년"
       var yOnly4 = raw.match(/(\d{4})년/);
-      if(yOnly4 && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(+yOnly4[1], today.getMonth(), 25));
+      if(yOnly4 && !raw.match(/\d{1,2}월/)) return _monthToKey(+yOnly4[1], today.getMonth()+1);
       // 2자리 연도만: "25년"
       var yOnly2 = raw.match(/(?<!\d)(\d{2})년/);
-      if(yOnly2 && !raw.match(/\d{1,2}월/)) return getPeriodKey(new Date(2000 + +yOnly2[1], today.getMonth(), 25));
-      if(cmd.match(/올해/)) return getPeriodKey(new Date(yr, today.getMonth(), 25));
-      if(cmd.match(/작년/)) return getPeriodKey(new Date(yr-1, today.getMonth(), 25));
-      if(cmd.match(/내년/)) return getPeriodKey(new Date(yr+1, today.getMonth(), 25));
+      if(yOnly2 && !raw.match(/\d{1,2}월/)) return _monthToKey(2000 + +yOnly2[1], today.getMonth()+1);
+      if(cmd.match(/올해/)) return _monthToKey(yr, today.getMonth()+1);
+      if(cmd.match(/작년/)) return _monthToKey(yr-1, today.getMonth()+1);
+      if(cmd.match(/내년/)) return _monthToKey(yr+1, today.getMonth()+1);
       var mM = raw.match(/(\d{1,2})월/);
-      if(mM && !cmd.match(/이번달|오늘/)) return getPeriodKey(new Date(yr, +mM[1]-1, 25));
-      if(cmd.match(/이번달|이번\s*달/)) return getPeriodKey(today);
-      if(cmd.match(/다음달|다음\s*달/)){var d1=new Date(today);d1.setMonth(d1.getMonth()+1);return getPeriodKey(d1);}
-      if(cmd.match(/지난달|저번달/)){var d2=new Date(today);d2.setMonth(d2.getMonth()-1);return getPeriodKey(d2);}
+      if(mM && !cmd.match(/이번달|오늘/)) return _monthToKey(yr, +mM[1]);
+      if(cmd.match(/이번달|이번\s*달/)) return getActiveKey() || getPeriodKey(today);
+      if(cmd.match(/다음달|다음\s*달/)) return _monthToKey(today.getFullYear(), today.getMonth()+2);
+      if(cmd.match(/지난달|저번달/))    return _monthToKey(today.getFullYear(), today.getMonth());
       return null;
     };
     const keyLabel = function(key) {
@@ -4969,7 +5084,16 @@ const VUI = (() => {
       var navId='month-'+navY+'-'+navM;
       setTicker('📅', navY+'년 '+(navM+1)+'월 달력으로 이동했어요');
       _ttsSpeakSafe(navY+'년 '+(navM+1)+'월 달력으로 이동합니다', true);
-      setTimeout(function(){ scrollToMonth(navId, true); }, 200);
+      // 탭 전환(fabNav) 후 DOM/레이아웃 확정까지 충분히 대기
+      setTimeout(function(){
+        var target = document.getElementById(navId);
+        if(target){
+          document.querySelectorAll('.calendar-month').forEach(function(m){ m.classList.remove('active'); });
+          target.classList.add('active');
+          if(typeof loadPanelUI === 'function') loadPanelUI();
+        }
+        scrollToMonth(navId, true);
+      }, 350);
       playSound('open'); return done();
     }
 
@@ -5006,6 +5130,16 @@ const VUI = (() => {
       setTicker('❓','"기본급 300만원" 처럼 말씀해 주세요'); return done();
     }
 
+    // 연도+월 지정된 경우 (일 지정 없음) 근무 등록 방지 — 잘못된 날짜 등록 버그 수정
+    const _hasYearMonth = !!(raw.match(/\d{4}년\s*\d{1,2}월/) || raw.match(/(?<!\d)\d{2}년\s*\d{1,2}월/));
+    const _hasDaySpec   = !!dayMatch; // 일(日)이 명시적으로 지정됐는지
+    if(_hasYearMonth && !_hasDaySpec && workType) {
+      // 연도+월만 있고 일(日) 없이 근무 등록 시도 → 통계 조회로 유도
+      setTicker('❓','날짜를 지정해 주세요 (예: "2025년 8월 15일 야간")');
+      _ttsSpeakSafe('날짜를 지정해 주세요. 예를 들어 2025년 8월 15일 야간처럼 말씀해 주세요', true);
+      return done();
+    }
+
     // ④ 월간 통계 조회 — 근무 등록 의도가 없을 때만 진입
     const _isStatQuery = !_hasWorkIntent && (
       cmd.match(/이번달|월급|얼마|실수령|급여|수령액|수입/) ||
@@ -5014,7 +5148,7 @@ const VUI = (() => {
     );
     if(_isStatQuery) {
       var qkey = parseQueryKey();
-      if(!qkey && cmd.match(/월급|얼마|실수령|급여|수령액/)) qkey = getPeriodKey(today);
+      if(!qkey && cmd.match(/월급|얼마|실수령|급여|수령액/)) qkey = getActiveKey() || getPeriodKey(today);
       if(!qkey){ setTicker('❓','"이번달 야간", "8월 실수령액", "2025년 8월 잔업" 처럼 말씀해 주세요'); return done(); }
       var qs=calcStats(qkey), qlbl=keyLabel(qkey);
       // totalSalary = 기본급 + 수당 + 추가항목(공제 포함) = 실수령액
@@ -5045,7 +5179,7 @@ const VUI = (() => {
     // ⑤ 근무 현황 확인 — 유의어 확장
     if(cmd.match(/현황|근무현황|근무확인|근무조회|이번달근무|근무상황|근무내역/) ||
        (cmd.match(/근무/) && cmd.match(INTENT_VIEW))) {
-      var hkey = parseQueryKey() || getPeriodKey(today);
+      var hkey = parseQueryKey() || getActiveKey() || getPeriodKey(today);
       var hs=calcStats(hkey), hlbl=keyLabel(hkey);
       var htotal=Object.values(DATA.workRecords).filter(function(r){ return getPeriodKey(new Date(r.date))===hkey; }).length;
       var htts = hlbl+' 야간 '+hs.nightDays+'일, 특근 '+hs.specialDays+'일, 잔업 '+(hs.weekdayOT+hs.specialOT).toFixed(1)+'시간';
@@ -5076,7 +5210,8 @@ const VUI = (() => {
       dates.forEach(dt => {
         const ds = fmtDate(dt);
         const roundedH = Math.round(otHours * 2) / 2;
-        DATA.workRecords[ds] = { date:ds, type:workType, overtimes:[{name:'VUI잔업',time:roundedH}] };
+        const prev = DATA.workRecords[ds] || {};
+        DATA.workRecords[ds] = { ...prev, date:ds, type:workType, overtimes:[{name:'VUI잔업',time:roundedH}] };
         save(); updateCell(ds);
       });
       updatePanel(); updateCalWidgets();
@@ -5086,12 +5221,13 @@ const VUI = (() => {
       playSound('save'); return done();
     }
 
-    // ⑧ 근무 형태 등록 (단일/기간)
+    // ⑧ 근무 형태 등록 (단일/기간) — 기존 overtimes 보존
     if(workType) {
       const dates = multiDates || [targetDate];
       dates.forEach(dt => {
         const ds = fmtDate(dt);
-        DATA.workRecords[ds] = { date:ds, type:workType, overtimes:[] };
+        const prev = DATA.workRecords[ds] || {};
+        DATA.workRecords[ds] = { ...prev, date:ds, type:workType, overtimes: prev.overtimes || [] };
         save(); updateCell(ds);
       });
       updatePanel(); updateCalWidgets();
@@ -5850,12 +5986,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     } catch(e){}
   })();
 
-  $('today-btn').addEventListener('click',()=>{
+  $('today-btn').addEventListener('click', () => {
+    const _t = new Date();
+    const _todayId = `month-${_t.getFullYear()}-${_t.getMonth()}`;
+
+    // 1. 미렌더링 상태라면 강제 렌더링
+    const _el = document.getElementById(_todayId);
+    if(_el) _renderMonthCells(_el, _t.getFullYear(), _t.getMonth());
+
+    // 2. 레이아웃 재정비
     applyLayout();
-    requestAnimationFrame(()=>{
-      applyLayout();
-      scrollToMonth(null,false);
-    });
+
+    // 3. 레이아웃 정비 완료 후 오늘 날짜로 이동
+    setTimeout(() => {
+      scrollToMonth(_todayId, true);
+
+      // 4. 오늘 셀 애니메이션 재시작 (시각적 피드백)
+      setTimeout(() => {
+        const todayCell = document.querySelector('.day-cell.today');
+        if(todayCell) {
+          todayCell.style.animation = 'none';
+          void todayCell.offsetWidth; // Reflow 강제 유발
+          todayCell.style.animation = '';
+        }
+      }, 300);
+    }, 50);
+
     playSound('click');
   });
   // 근무형태 변경시 잔업 목록 초기화
@@ -5935,11 +6091,36 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.addEventListener('orientationchange',()=>syncLayoutSoon(200));
   if(window.visualViewport) window.visualViewport.addEventListener('resize',()=>{
     syncLayoutSoon(50);
-    // 키보드 올라올 때 ds-sheet 높이 재계산
-    var ds = document.querySelector('.ds-sheet');
+    // ── 키보드 높이 계산 → Fixed 요소 밀어올리기 ──
+    const vvp = window.visualViewport;
+    const kbH = Math.max(0, window.innerHeight - vvp.height - vvp.offsetTop);
+    const safeB = kbH > 50 ? kbH + 8 : 0; // 키보드 올라왔을 때만 보정
+    // 티커바
+    const ticker = document.getElementById('utility-ticker-container');
+    if(ticker) ticker.style.bottom = (safeB > 0 ? safeB + 8 : 84) + 'px';
+    // FAB 영역
+    const fabArea = document.getElementById('fab-area');
+    if(fabArea) fabArea.style.bottom = (safeB > 0 ? safeB + 4 : 0) + 'px';
+    // FAB 레이블
+    const fabLabel = document.getElementById('fab-label');
+    if(fabLabel) fabLabel.style.bottom = (safeB > 0 ? safeB + 56 : 72) + 'px';
+    // VUI 텍스트 모달 높이 재계산
+    const vtm = document.getElementById('vui-text-modal');
+    if(vtm && vtm.classList.contains('open')){
+      vtm.style.bottom = (safeB > 0 ? safeB : 0) + 'px';
+    }
+    // ds-sheet 높이 재계산
+    const ds = document.querySelector('.ds-sheet');
     if(ds && document.getElementById('detail-sheet-modal').classList.contains('open')){
-      var avail = window.visualViewport.height;
+      const avail = vvp.height;
       ds.style.maxHeight = Math.min(avail * 0.92, window.innerHeight * 0.88) + 'px';
+    }
+    // 키보드 내려가면 원복
+    if(safeB === 0){
+      if(ticker) ticker.style.bottom = '';
+      if(fabArea) fabArea.style.bottom = '';
+      if(fabLabel) fabLabel.style.bottom = '';
+      if(vtm) vtm.style.bottom = '';
     }
   });
   // 파티클 생성 (저사양 모드에서는 생략)
