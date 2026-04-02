@@ -3049,7 +3049,7 @@ body.low-perf::before { animation: none !important; background: none !important;
 /* ═══════════════════════════════════════════════
    ADMIN CONFIG
 ═══════════════════════════════════════════════ */
-const ADMIN_NOTICE = "☆모델 버전2\n■UI, UX개선.\n■음성기능 추가\n앱 사용시 장애신고/문의: 010-4104-2226";
+const ADMIN_NOTICE = "통계부분 수정됨.\n2026년 1월 20일까지 연말정산 자료 회사에 제출하셔야 됩니다.\n앱 사용시 장애신고/문의: 010-4104-2226";
 
 /* ═══════════════════════════════════════════════
    토스트 알림
@@ -3240,7 +3240,7 @@ function updateGoalGauge() {
   if(typeof getActiveKey !== 'function' || typeof calcStats !== 'function') return;
   const key = getActiveKey(); if(!key) return;
   const s = calcStats(key);
-  const net = Math.floor(s.totalSalary);
+  const net = Math.round(s.totalSalary);
   const goal = (typeof N === 'function') ? N(DATA.settings.goalSalary) : (DATA.settings.goalSalary||0);
 
   const pct = goal > 0 ? Math.min(100, Math.round(net / goal * 100)) : 0;
@@ -3898,9 +3898,9 @@ const calcStats = key => {
   const stdH=(cls==='D')?209:226;
   if(isJan){
     let fbp=bpPrev*(31/12); if(regPrev) fbp+=REG_BONUS;
-    stats.prevPart.hourlyWage=fbp>0?fbp/stdH:0;
+    stats.prevPart.hourlyWage=fbp>0?Math.round(fbp/stdH):0;
     let fbc=bpCurr*(31/19); if(regCurr) fbc+=REG_BONUS;
-    stats.currPart.hourlyWage=fbc>0?fbc/stdH:0;
+    stats.currPart.hourlyWage=fbc>0?Math.round(fbc/stdH):0;
     stats.basePay=bpPrev+bpCurr;
   } else {
     let fb=bpCurr; if(regCurr) fb+=REG_BONUS;
@@ -3963,7 +3963,7 @@ const calcStats = key => {
 const updatePanel = () => {
   const key=getActiveKey(); if(!key) return;
   const s=calcStats(key);
-  $('panel-amount').textContent=Math.floor(s.totalSalary).toLocaleString()+' 원';
+  $('panel-amount').textContent=Math.round(s.totalSalary).toLocaleString()+' 원';
   const isJan=key.endsWith('-12');
   let disp=s, hwText=fmtWon(s.finalHourlyWage);
   if(isJan){
@@ -4347,7 +4347,7 @@ const renderStats = () => {
         tGross+=gross; tDeduct+=s.totalDeductions;
         const rid=`sr-${key}`;
         let dv='';
-        if(mode==='salary') dv=`<strong style="color:var(--st-blue);font-size:1.0em;font-weight:900;">${Math.floor(s.totalSalary).toLocaleString()} 원</strong>`;
+        if(mode==='salary') dv=`<strong style="color:var(--st-blue);font-size:1.0em;font-weight:900;">${Math.round(s.totalSalary).toLocaleString()} 원</strong>`;
         else if(mode==='work') dv=`<div class="work-grid"><span>야간<b style="color:var(--st-blue);">${s.nightDays}일</b></span><span>특근<b style="color:var(--st-amber);">${s.specialDays}일</b></span><span>휴가<b style="color:var(--st-green);">${s.vacationDays}일</b></span></div>`;
         else dv=`<span style="color:var(--st-red);font-weight:900;font-size:1.0em;">${Math.floor(s.totalDeductions).toLocaleString()} 원</span>`;
         let items=[...(DATA.settings.additionalItemsByPeriod[key]||[])];
@@ -4394,8 +4394,8 @@ const renderStats = () => {
       }
     }
   });
-  $('stats-dash-net').textContent=Math.floor(tNet).toLocaleString()+' 원';
-  $('stats-dash-gross').textContent=Math.floor(tGross).toLocaleString()+' 원';
+  $('stats-dash-net').textContent=Math.round(tNet).toLocaleString()+' 원';
+  $('stats-dash-gross').textContent=Math.round(tGross).toLocaleString()+' 원';
   $('stats-dash-deduct').textContent=Math.floor(tDeduct).toLocaleString()+' 원';
   // thead는 고정 bar로 분리됨 - 동적 top 불필요
   // 데이터 없을 때 빈 상태 표시
@@ -5106,7 +5106,7 @@ const VUI = (() => {
       var qs=calcStats(qkey), qlbl=keyLabel(qkey);
       // totalSalary = 기본급 + 수당 + 추가항목(공제 포함) = 실수령액
       // (추가항목의 음수값이 이미 additionalAmount에 반영되어 있음)
-      var netPay = Math.floor(qs.totalSalary);
+      var netPay = Math.round(qs.totalSalary);
       var netWan = Math.floor(netPay / 10000);
       if(cmd.includes('야간')) {
         var ttsS1 = qlbl+' 야간 '+qs.nightDays+'일, '+Math.floor(qs.nightAmount/10000)+'만원';
